@@ -12,7 +12,7 @@ ENV/
 # ChromaDB and local data
 chroma_data/
 *.db
-!beads.db
+!.beads/*.jsonl
 mcp_index_data/
 mcp_index_data_*/
 
@@ -37,9 +37,9 @@ Thumbs.db
 .mcp/
 .mcp.json
 
-# Beads issue tracker (commit .beads/ directory for collaboration)
-# Note: .beads/ contains JSONL issue data and should be committed
-# beads.db is included and should be committed for full state
+# Beads issue tracker
+# .beads/issues.jsonl is committed (source of truth)
+# .beads/*.db is ignored (local SQLite cache)
 
 # Local configuration
 .mcpindexer/
