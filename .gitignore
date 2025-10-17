@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv/
+
+# ChromaDB and local data
+chroma_data/
+*.db
+mcp_index_data/
+mcp_index_data_*/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+.cursor/
+.claude/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# MCP local configuration
+.mcp/
+.mcp.json
+
+# bd issue tracker
+.beads/
+
+# Local configuration
+.mcpindexer/

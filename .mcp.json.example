@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "mcpindexer": {
+      "command": "python3",
+      "args": [
+        "/absolute/path/to/mcpIndexer/src/mcpindexer/server.py"
+      ],
+      "env": {
+        "PYTHONPATH": "/absolute/path/to/mcpIndexer/src",
+        "MCP_INDEXER_DB_PATH": "~/.mcpindexer/db"
+      }
+    }
+  }
+}
