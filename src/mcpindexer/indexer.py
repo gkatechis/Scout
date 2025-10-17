@@ -13,6 +13,7 @@ from mcpindexer.chunker import CodeChunker, CodeChunk
 from mcpindexer.embeddings import EmbeddingStore
 from mcpindexer.dependency_analyzer import DependencyAnalyzer, CrossRepoAnalyzer
 from mcpindexer.stack_config import StackConfig, IndexingStatus
+from mcpindexer.dependency_storage import DependencyStorage
 
 
 @dataclass
@@ -71,7 +72,8 @@ class RepoIndexer:
     def index(
         self,
         file_filter: Optional[callable] = None,
-        progress_callback: Optional[callable] = None
+        progress_callback: Optional[callable] = None,
+        batch_size: int = 1000
     ) -> IndexingResult:
         """
         Index the entire repository
@@ -79,6 +81,7 @@ class RepoIndexer:
         Args:
             file_filter: Optional function to filter files (path -> bool)
             progress_callback: Optional callback for progress updates
+            batch_size: Number of chunks to batch before adding to store
 
         Returns:
             IndexingResult with statistics
@@ -87,6 +90,8 @@ class RepoIndexer:
         files_skipped = 0
         errors = []
         all_chunks = []
+        chunks_indexed = 0
+        total_chunks_created = 0
 
         # Get current git commit
         git_commit = self._get_git_commit()
@@ -110,31 +115,41 @@ class RepoIndexer:
                 # Chunk code
                 chunks = self.chunker.chunk_file(parsed)
                 all_chunks.extend(chunks)
+                total_chunks_created += len(chunks)
 
                 files_processed += 1
 
+                # Add chunks in batches to avoid memory exhaustion
+                if len(all_chunks) >= batch_size:
+                    try:
+                        self.embedding_store.add_chunks(all_chunks)
+                        chunks_indexed += len(all_chunks)
+                        all_chunks = []  # Clear batch
+                    except Exception as e:
+                        errors.append(f"Embedding batch error: {str(e)}")
+                        all_chunks = []  # Clear batch even on error
+
                 # Progress callback
                 if progress_callback and files_processed % 10 == 0:
-                    progress_callback(files_processed, len(all_chunks))
+                    progress_callback(files_processed, chunks_indexed + len(all_chunks))
 
             except Exception as e:
                 files_skipped += 1
                 errors.append(f"{file_path}: {str(e)}")
 
-        # Generate embeddings and store
-        chunks_indexed = 0
+        # Add remaining chunks
         if all_chunks:
             try:
                 self.embedding_store.add_chunks(all_chunks)
-                chunks_indexed = len(all_chunks)
+                chunks_indexed += len(all_chunks)
             except Exception as e:
-                errors.append(f"Embedding error: {str(e)}")
+                errors.append(f"Embedding final batch error: {str(e)}")
 
         return IndexingResult(
             repo_name=self.repo_name,
             files_processed=files_processed,
             files_skipped=files_skipped,
-            chunks_created=len(all_chunks),
+            chunks_created=total_chunks_created,
             chunks_indexed=chunks_indexed,
             git_commit=git_commit,
             errors=errors
@@ -304,6 +319,7 @@ class MultiRepoIndexer:
         self.repo_indexers: Dict[str, RepoIndexer] = {}
         self.cross_repo_analyzer = CrossRepoAnalyzer()
         self.stack_config = StackConfig(config_path)
+        self.dependency_storage = DependencyStorage()
 
     def add_repo(
         self,
@@ -342,6 +358,19 @@ class MultiRepoIndexer:
 
             try:
                 result = indexer.index()
+
+                # Analyze and save dependencies
+                dep_graph = indexer.dependency_analyzer.analyze()
+                cross_deps = self._find_cross_repo_deps_for_repo(
+                    repo_name,
+                    dep_graph.external_packages
+                )
+                self.dependency_storage.save_repo_dependencies(
+                    repo_name=repo_name,
+                    internal_deps=dep_graph.internal_deps,
+                    external_packages=list(dep_graph.external_packages),
+                    cross_repo_deps=cross_deps
+                )
 
                 # Update status to indexed
                 self.stack_config.update_repo_status(
@@ -438,7 +467,7 @@ class MultiRepoIndexer:
         Returns:
             List of cross-repo dependencies
         """
-        return self.cross_repo_analyzer.find_cross_repo_dependencies()
+        return self.dependency_storage.get_all_cross_repo_dependencies()
 
     def suggest_missing_repos(self) -> List[str]:
         """
@@ -447,8 +476,56 @@ class MultiRepoIndexer:
         Returns:
             List of suggested repository names
         """
-        indexed_repos = set(self.repo_indexers.keys())
-        return self.cross_repo_analyzer.suggest_missing_repos(indexed_repos)
+        indexed_repos = set(self.list_repos())
+        return self.dependency_storage.suggest_missing_repos(indexed_repos)
+
+    def _find_cross_repo_deps_for_repo(
+        self,
+        repo_name: str,
+        external_packages: Set[str]
+    ) -> List[Dict[str, str]]:
+        """
+        Find cross-repository dependencies for a single repo
+
+        Args:
+            repo_name: Source repository name
+            external_packages: External packages used by this repo
+
+        Returns:
+            List of cross-repo dependencies
+        """
+        cross_deps = []
+        all_repos = set(self.list_repos())
+
+        for package in external_packages:
+            # Check if package matches any other indexed repo
+            for other_repo in all_repos:
+                if other_repo != repo_name and self._package_matches_repo(package, other_repo):
+                    cross_deps.append({
+                        "source_repo": repo_name,
+                        "target_repo": other_repo,
+                        "package": package
+                    })
+
+        return cross_deps
+
+    def _package_matches_repo(self, package: str, repo_name: str) -> bool:
+        """
+        Check if a package name matches a repository
+
+        Args:
+            package: Package name
+            repo_name: Repository name
+
+        Returns:
+            True if they match
+        """
+        # Normalize names
+        package_lower = package.lower().replace('@zendesk/', '').replace('zendesk-', '').replace('_', '-')
+        repo_lower = repo_name.lower().replace('zendesk-', '').replace('zendesk_', '').replace('_', '-')
+
+        # Check for matches
+        return package_lower in repo_lower or repo_lower in package_lower
 
     def get_stack_status(self) -> Dict:
         """

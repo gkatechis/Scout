@@ -135,6 +135,31 @@ class CodeChunker:
             ))
         else:
             # Split large class by methods
+            # But first, create a chunk for the class header/definition
+            class_header = self._extract_class_header(cls, parsed_file)
+            if class_header:
+                chunks.append(CodeChunk(
+                    chunk_id=self._generate_chunk_id(),
+                    file_path=parsed_file.file_path,
+                    repo_name=self.repo_name,
+                    language=parsed_file.language.value,
+                    chunk_type="class_definition",
+                    code_text=class_header,
+                    start_line=cls.start_line,
+                    end_line=min(cls.start_line + 50, cls.end_line),  # First ~50 lines
+                    symbol_name=cls.name,
+                    parent_class=None,
+                    imports=imports,
+                    context_text=self._build_context(
+                        parsed_file.file_path,
+                        cls.name,
+                        None,
+                        class_header
+                    ),
+                    token_count=self._estimate_tokens(class_header)
+                ))
+
+            # Then chunk the methods
             methods = self._extract_methods_from_class(cls, parsed_file)
 
             for method in methods:
@@ -256,6 +281,35 @@ class CodeChunker:
         """Generate unique chunk ID"""
         self.chunk_counter += 1
         return f"{self.repo_name}:chunk:{self.chunk_counter}"
+
+    def _extract_class_header(
+        self,
+        cls: CodeSymbol,
+        parsed_file: ParsedFile
+    ) -> Optional[str]:
+        """
+        Extract class header/definition (first ~50 lines or up to first method)
+
+        This captures the class declaration, includes, inheritance, and attributes
+        but excludes method definitions for large classes.
+        """
+        lines = cls.text.splitlines()
+
+        # Take first 50 lines or up to TARGET_MAX_TOKENS, whichever is smaller
+        max_lines = 50
+        header_lines = []
+
+        for i, line in enumerate(lines[:max_lines]):
+            # Stop if we estimate we've hit the token limit
+            current_text = "\n".join(header_lines + [line])
+            if self._estimate_tokens(current_text) > self.TARGET_MAX_TOKENS:
+                break
+            header_lines.append(line)
+
+        if header_lines:
+            return "\n".join(header_lines)
+
+        return None
 
     def _build_context(
         self,
