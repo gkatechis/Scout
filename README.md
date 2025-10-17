@@ -2,6 +2,10 @@
 
 Semantic code search indexer for AI tools via the Model Context Protocol (MCP).
 
+## For AI Coding Agents
+
+**If you're an AI agent working on this project**, please read [AGENTS.MD](AGENTS.MD) first. It contains instructions for using Beads issue tracking to manage tasks systematically across sessions.
+
 ## Overview
 
 MCP Indexer provides intelligent code search capabilities to any MCP-compatible LLM (Claude, etc.). It indexes your repositories using semantic embeddings, enabling natural language code search, symbol lookups, and cross-repo dependency analysis.
