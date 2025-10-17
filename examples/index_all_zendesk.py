@@ -16,16 +16,17 @@ from mcpindexer.embeddings import EmbeddingStore
 
 def main():
     print("=" * 80)
-    print("Indexing All Zendesk Repositories")
+    print("Indexing All Organization Repositories")
     print("=" * 80)
 
     # Initialize
-    db_path = os.getenv("MCP_INDEXER_DB_PATH", "/Users/gkatechis/.mcpindexer/db")
+    db_path = os.getenv("MCP_INDEXER_DB_PATH", os.path.expanduser("~/.mcpindexer/db"))
     embedding_store = EmbeddingStore(db_path=db_path, collection_name="mcp_code_index")
     indexer = MultiRepoIndexer(embedding_store=embedding_store)
 
     # Find all git repos
-    zendesk_base = Path.home() / "Code" / "zendesk"
+    # TODO: Update this path to your organization's repository directory
+    zendesk_base = Path.home() / "Code" / "zendesk"  # Example: ~/Code/myorg
 
     repos_to_index = []
     for git_dir in zendesk_base.rglob(".git"):

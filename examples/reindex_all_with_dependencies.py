@@ -21,7 +21,7 @@ def main():
     print("=" * 80)
 
     # Initialize
-    db_path = os.getenv("MCP_INDEXER_DB_PATH", "/Users/gkatechis/.mcpindexer/db")
+    db_path = os.getenv("MCP_INDEXER_DB_PATH", os.path.expanduser("~/.mcpindexer/db"))
     embedding_store = EmbeddingStore(db_path=db_path, collection_name="mcp_code_index")
     indexer = MultiRepoIndexer(embedding_store=embedding_store)
 
@@ -121,10 +121,10 @@ def main():
     dep_stats = indexer.dependency_storage.get_stats()
     print(f"\nRepos with dependencies tracked: {dep_stats['total_repos_with_deps']}")
     print(f"Cross-repo dependencies found: {dep_stats['total_cross_repo_deps']}")
-    print(f"Unique Zendesk packages: {dep_stats['total_unique_packages']}")
+    print(f"Unique packages: {dep_stats['total_unique_packages']}")
 
     if dep_stats['unique_packages']:
-        print("\nZendesk packages found:")
+        print("\nPackages found:")
         for pkg in dep_stats['unique_packages'][:20]:
             print(f"  • {pkg}")
         if len(dep_stats['unique_packages']) > 20:

@@ -17,42 +17,69 @@ MCP Indexer provides intelligent code search capabilities to any MCP-compatible 
 
 ## Installation
 
-```bash
-# Install dependencies
-pip install -r requirements.txt
+### Prerequisites
 
-# Make CLI accessible
-export PYTHONPATH=/path/to/mcpIndexer/src
+- Python 3.8 or higher
+- pip
+
+### Steps
+
+1. Clone the repository:
+```bash
+git clone https://github.com/gkatechis/mcpIndexer.git
+cd mcpIndexer
+```
+
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+3. Set up environment variables:
+```bash
+export PYTHONPATH=/absolute/path/to/mcpIndexer/src
+export MCP_INDEXER_DB_PATH=~/.mcpindexer/db  # Optional, defaults to this location
+```
+
+4. Configure MCP integration (for Claude Code or other MCP clients):
+```bash
+cp .mcp.json.example .mcp.json
+# Edit .mcp.json and update paths to your installation directory
 ```
 
 ## Quick Start
 
-### 1. Add Repositories
+### 1. Try the Demo
+
+Run the demo to see mcpIndexer in action:
 
 ```bash
-# Using Python
-python3 -c "
+python3 examples/demo.py
+```
+
+### 2. Index Your Repositories
+
+```python
+import os
 from mcpindexer.indexer import MultiRepoIndexer
 from mcpindexer.embeddings import EmbeddingStore
 
-store = EmbeddingStore('./mcp_index_data', 'mcp_code_index')
+# Initialize with your database path
+db_path = os.getenv("MCP_INDEXER_DB_PATH", os.path.expanduser("~/.mcpindexer/db"))
+store = EmbeddingStore(db_path=db_path, collection_name='mcp_code_index')
 indexer = MultiRepoIndexer(store)
 
+# Add and index your repository
 indexer.add_repo(
     repo_path='/path/to/your/repo',
     repo_name='my-repo',
     auto_index=True
 )
-"
 ```
 
-### 2. Run MCP Server
+### 3. Use with MCP Clients
 
-```bash
-python3 src/mcpindexer/server.py
-```
-
-### 3. Search Your Code
+Once configured in `.mcp.json`, the MCP server automatically starts when you use an MCP client like Claude Code.
 
 The MCP server exposes 12 tools:
 
@@ -117,9 +144,11 @@ This installs a post-merge hook that triggers reindexing after pulls.
 ### Semantic Search
 
 ```python
+import os
 from mcpindexer.embeddings import EmbeddingStore
 
-store = EmbeddingStore('./mcp_index_data', 'mcp_code_index')
+db_path = os.getenv("MCP_INDEXER_DB_PATH", os.path.expanduser("~/.mcpindexer/db"))
+store = EmbeddingStore(db_path=db_path, collection_name='mcp_code_index')
 
 # Natural language queries
 results = store.semantic_search(
@@ -159,7 +188,8 @@ suggestions = indexer.suggest_missing_repos()
 
 ### Environment Variables
 
-- `MCP_INDEXER_DB_PATH` - Database path (default: `./mcp_index_data`)
+- `MCP_INDEXER_DB_PATH` - Database path (default: `~/.mcpindexer/db`)
+- `PYTHONPATH` - Must include the `src/` directory of your installation
 
 ### Stack Configuration
 
@@ -335,10 +365,11 @@ python3 -m pytest tests/ -v
 # Run specific test file
 python3 -m pytest tests/test_embeddings.py -v
 
-# Test with real repos
-python3 test_real_repo.py
-python3 test_monolith.py
+# Run example scripts
+python3 examples/demo.py
 ```
+
+See the `examples/` directory for more usage examples.
 
 ## Contributing
 
@@ -352,7 +383,7 @@ All components are independently tested with comprehensive coverage.
 
 ## License
 
-[Your License Here]
+MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Support
 

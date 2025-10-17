@@ -520,9 +520,9 @@ class MultiRepoIndexer:
         Returns:
             True if they match
         """
-        # Normalize names
-        package_lower = package.lower().replace('@zendesk/', '').replace('zendesk-', '').replace('_', '-')
-        repo_lower = repo_name.lower().replace('zendesk-', '').replace('zendesk_', '').replace('_', '-')
+        # Normalize names by removing common prefixes and special characters
+        package_lower = package.lower().replace('@', '').replace('/', '').replace('_', '-')
+        repo_lower = repo_name.lower().replace('_', '-')
 
         # Check for matches
         return package_lower in repo_lower or repo_lower in package_lower

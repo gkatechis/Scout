@@ -20,12 +20,13 @@ def main():
     print("=" * 80)
 
     # Initialize
-    db_path = os.getenv("MCP_INDEXER_DB_PATH", "/Users/gkatechis/.mcpindexer/db")
+    db_path = os.getenv("MCP_INDEXER_DB_PATH", os.path.expanduser("~/.mcpindexer/db"))
     embedding_store = EmbeddingStore(db_path=db_path, collection_name="mcp_code_index")
     indexer = MultiRepoIndexer(embedding_store=embedding_store)
 
-    repo_name = "zendesk"
-    repo_path = "/Users/gkatechis/Code/zendesk/zendesk"
+    # TODO: Update these paths to your repository
+    repo_name = "large-repo"  # Example: your repository name
+    repo_path = os.path.expanduser("~/Code/myorg/large-repo")  # Example path
 
     print(f"\nRepo: {repo_name}")
     print(f"Path: {repo_path}")

@@ -11,12 +11,14 @@ from typing import Dict, List, Optional, Set
 class DependencyStorage:
     """Manages persistent storage of dependency graphs"""
 
-    def __init__(self, storage_path: Optional[str] = None):
+    def __init__(self, storage_path: Optional[str] = None, org_prefixes: Optional[List[str]] = None):
         """
         Initialize dependency storage
 
         Args:
             storage_path: Path to dependencies file. If None, uses default.
+            org_prefixes: Optional list of organization prefixes to filter packages (e.g., ['@myorg/', 'myorg-'])
+                         If None, all packages are stored.
         """
         if storage_path:
             self.storage_path = Path(storage_path)
@@ -24,6 +26,7 @@ class DependencyStorage:
             # Default to ~/.mcpindexer/dependencies.json
             self.storage_path = Path.home() / ".mcpindexer" / "dependencies.json"
 
+        self.org_prefixes = org_prefixes or []
         self.dependencies: Dict[str, Dict] = {}
         self.load()
 
@@ -70,12 +73,12 @@ class DependencyStorage:
             external_packages: External package names
             cross_repo_deps: Cross-repository dependencies
         """
-        # Filter external packages to only Zendesk internal ones
-        zendesk_packages = self._filter_zendesk_packages(external_packages)
+        # Filter external packages based on org prefixes if configured
+        filtered_packages = self._filter_org_packages(external_packages) if self.org_prefixes else external_packages
 
         self.dependencies[repo_name] = {
             "internal_count": len(internal_deps),
-            "external_packages": zendesk_packages,
+            "external_packages": filtered_packages,
             "cross_repo_deps": cross_repo_deps
         }
         self.save()
@@ -146,24 +149,26 @@ class DependencyStorage:
 
         return sorted(suggestions)
 
-    def _filter_zendesk_packages(self, packages: List[str]) -> List[str]:
+    def _filter_org_packages(self, packages: List[str]) -> List[str]:
         """
-        Filter packages to only include Zendesk internal ones
+        Filter packages to only include organization-specific ones
 
         Args:
             packages: List of package names
 
         Returns:
-            Filtered list
+            Filtered list matching configured org prefixes
         """
-        zendesk_packages = []
+        org_packages = []
         for package in packages:
-            # Include if it starts with zendesk or is a scoped @zendesk package
-            if (package.startswith('zendesk') or
-                package.startswith('@zendesk/') or
-                'zendesk' in package.lower()):
-                zendesk_packages.append(package)
-        return zendesk_packages
+            # Check if package matches any org prefix
+            package_lower = package.lower()
+            for prefix in self.org_prefixes:
+                prefix_lower = prefix.lower()
+                if package_lower.startswith(prefix_lower) or prefix_lower in package_lower:
+                    org_packages.append(package)
+                    break
+        return org_packages
 
     def _repos_match(self, package: str, repo_name: str) -> bool:
         """
@@ -176,9 +181,14 @@ class DependencyStorage:
         Returns:
             True if they match
         """
-        # Simple matching - could be more sophisticated
-        package_lower = package.lower().replace('@zendesk/', '').replace('zendesk-', '')
-        repo_lower = repo_name.lower().replace('zendesk-', '').replace('zendesk_', '')
+        # Normalize package name by removing org prefixes and scopes
+        package_lower = package.lower()
+        for prefix in self.org_prefixes:
+            package_lower = package_lower.replace(prefix.lower(), '')
+
+        # Remove common package/scope prefixes
+        package_lower = package_lower.replace('@', '').replace('/', '').replace('-', '').replace('_', '')
+        repo_lower = repo_name.lower().replace('-', '').replace('_', '')
 
         return package_lower in repo_lower or repo_lower in package_lower
 
