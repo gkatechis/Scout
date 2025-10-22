@@ -229,6 +229,30 @@ async def list_tools() -> list[Tool]:
                 "properties": {}
             }
         ),
+        Tool(
+            name="answer_question",
+            description="Retrieve relevant code context to answer questions about the codebase. Returns code snippets with metadata that the agent can use to formulate answers.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "question": {
+                        "type": "string",
+                        "description": "The question to answer about the codebase"
+                    },
+                    "repos": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Optional: Limit search to specific repositories. If empty, searches all repos."
+                    },
+                    "context_limit": {
+                        "type": "integer",
+                        "description": "Maximum number of code snippets to retrieve (default: 10)",
+                        "default": 10
+                    }
+                },
+                "required": ["question"]
+            }
+        ),
     ]
 
 
@@ -513,6 +537,54 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             for status, count in stats['by_status'].items():
                 if count > 0:
                     output.append(f"    {status}: {count}")
+
+            return [TextContent(type="text", text="\n".join(output))]
+
+        elif name == "answer_question":
+            question = arguments.get("question", "")
+            repos = arguments.get("repos", None)
+            context_limit = arguments.get("context_limit", 10)
+
+            if not question:
+                return [TextContent(
+                    type="text",
+                    text="Error: question parameter is required"
+                )]
+
+            # Retrieve relevant code context using semantic search
+            search_results = indexer.embedding_store.semantic_search(
+                query=question,
+                n_results=context_limit,
+                repo_filter=repos
+            )
+
+            if not search_results:
+                return [TextContent(
+                    type="text",
+                    text=f"No relevant code found for question: '{question}'"
+                )]
+
+            # Build context from search results
+            output = [f"Retrieved {len(search_results)} relevant code snippet(s) for: '{question}'\n"]
+
+            for i, result in enumerate(search_results, 1):
+                output.append(f"\n{'='*80}")
+                output.append(f"Code Snippet {i}")
+                output.append(f"{'='*80}")
+                output.append(f"File: {result.file_path}")
+                output.append(f"Repository: {result.repo_name}")
+                if result.symbol_name:
+                    output.append(f"Symbol: {result.symbol_name}")
+                output.append(f"Lines: {result.metadata.get('start_line', '?')}-{result.metadata.get('end_line', '?')}")
+                output.append(f"Type: {result.metadata.get('chunk_type', 'unknown')}")
+                output.append(f"Relevance Score: {result.score:.4f}")
+                output.append(f"\nCode:")
+                output.append(f"```{result.metadata.get('language', '')}")
+                output.append(result.code_text)
+                output.append("```\n")
+
+            output.append(f"\n{'='*80}")
+            output.append("Use the code snippets above to answer the question.")
 
             return [TextContent(type="text", text="\n".join(output))]
 

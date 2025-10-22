@@ -17,7 +17,7 @@ async def test_list_tools():
     """Test that all expected tools are registered"""
     tools = await list_tools()
 
-    assert len(tools) == 12  # We defined 12 tools
+    assert len(tools) == 13  # We defined 13 tools
 
     tool_names = [tool.name for tool in tools]
     expected_tools = [
@@ -32,7 +32,8 @@ async def test_list_tools():
         "list_repos",
         "get_cross_repo_dependencies",
         "suggest_missing_repos",
-        "get_stack_status"
+        "get_stack_status",
+        "answer_question"
     ]
 
     for expected_tool in expected_tools:
@@ -158,6 +159,30 @@ async def test_call_get_stack_status():
     assert len(result) == 1
     assert result[0].type == "text"
     assert "Stack Status" in result[0].text or "Total Repositories" in result[0].text
+
+
+@pytest.mark.asyncio
+async def test_answer_question_schema():
+    """Test answer_question tool has correct schema"""
+    tools = await list_tools()
+    answer_question = next(t for t in tools if t.name == "answer_question")
+
+    assert answer_question is not None
+    assert "question" in answer_question.inputSchema["properties"]
+    assert "repos" in answer_question.inputSchema["properties"]
+    assert "context_limit" in answer_question.inputSchema["properties"]
+    assert "question" in answer_question.inputSchema["required"]
+
+
+@pytest.mark.asyncio
+async def test_call_answer_question():
+    """Test calling answer_question returns relevant context"""
+    result = await call_tool("answer_question", {"question": "What is authentication?"})
+
+    assert len(result) == 1
+    assert result[0].type == "text"
+    # Should return either results or "No relevant code found"
+    assert "authentication" in result[0].text.lower() or "no relevant code" in result[0].text.lower()
 
 
 if __name__ == "__main__":
