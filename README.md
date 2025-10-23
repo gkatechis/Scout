@@ -37,7 +37,7 @@ MCP Indexer provides intelligent code search capabilities to any MCP-compatible 
 1. Clone the repository:
 
 ```bash
-git clone <<https://github.com/gkatechis/mcpIndexer.git>>
+git clone <<<<https://github.com/gkatechis/mcpIndexer.git>>>>
 cd mcpIndexer
 
 ```
@@ -77,7 +77,7 @@ export MCP_INDEXER_DB_PATH=~/.mcpindexer/db
 1. Clone the repository:
 
 ```bash
-git clone <<https://github.com/gkatechis/mcpIndexer.git>>
+git clone <<<<https://github.com/gkatechis/mcpIndexer.git>>>>
 cd mcpIndexer
 
 ```
@@ -169,43 +169,113 @@ indexer.add_repo(
 
 Once configured in `.mcp.json`, the MCP server automatically starts when you use an MCP client like Claude Code.
 
-The MCP server exposes 13 tools:
+## MCP Tools Reference
 
-**Search Tools:**
+The MCP server exposes 13 tools organized by functionality:
 
-- `semantic_search` - Natural language code search
+### AI-Powered Q&A (Recommended for Users)
 
-- `find_definition` - Find where symbols are defined
+**`answer_question`** - Ask questions about your codebase and get answers
 
-- `find_references` - Find where symbols are used
+- **Use when:** You want a natural language answer to a question about your code
 
-- `find_related_code` - Find architecturally related files
+- **Returns:** Relevant code snippets + file references + analysis prompt for the AI agent
 
-**AI-Powered Q&A:**
+- **Example:** "How does authentication work?" → Agent analyzes code and explains it
 
-- `answer_question` - Retrieve relevant code context for questions. The agent will use this context to provide comprehensive answers.
+- **Best for:** End users asking questions about codebases
 
-**Repository Management:**
+### Search Tools (For Advanced Queries)
 
-- `add_repo_to_stack` - Add a new repository
+**`semantic_search`** - Natural language code search
 
-- `remove_repo` - Remove a repository
+- **Use when:** You want raw search results to analyze yourself or build upon
 
-- `list_repos` - List all indexed repos
+- **Returns:** List of code snippets with metadata (file, lines, relevance scores)
 
-- `get_repo_stats` - Get detailed repo statistics
+- **Example:** "authentication logic" → Returns 10 relevant code snippets
 
-- `reindex_repo` - Force reindex a repository
+- **Best for:** Programmatic access or when you need full search result details
 
-**Cross-Repo Analysis:**
+- **Note:** `answer_question`uses this internally - prefer`answer_question` for Q&A
 
-- `get_cross_repo_dependencies` - Find dependencies between repos
+**`find_definition`** - Find where a symbol is defined
 
-- `suggest_missing_repos` - Suggest repos to add based on imports
+- **Use when:** You know a function/class name and want to find its definition
 
-**Stack Management:**
+- **Returns:** File path, line numbers, and definition code
 
-- `get_stack_status` - Get overall indexing status
+- **Example:** "authenticate_user" → Shows where the function is defined
+
+**`find_references`** - Find all usages of a symbol
+
+- **Use when:** You want to see everywhere a function/class is used
+
+- **Returns:** List of files and lines where the symbol appears
+
+- **Example:** "authenticate_user" → Shows all calls to this function
+
+**`find_related_code`** - Find architecturally related files
+
+- **Use when:** You want to find files that are similar in structure/purpose
+
+- **Returns:** List of related files based on imports, patterns, and architecture
+
+- **Example:** Given "auth/login.py" → Finds other auth-related files
+
+### Repository Management
+
+**`add_repo_to_stack`** - Add a new repository to index
+
+- **Parameters:** `repo_path`(local path),`repo_name` (identifier)
+
+- **Use when:** Adding a new codebase to search
+
+**`remove_repo`** - Remove a repository from the stack
+
+- **Parameters:** `repo_name`
+
+- **Use when:** Removing a codebase from search
+
+**`list_repos`** - List all indexed repositories
+
+- **Returns:** List of repo names, paths, and basic stats
+
+- **Use when:** Checking what's currently indexed
+
+**`get_repo_stats`** - Get detailed repository statistics
+
+- **Parameters:** `repo_name`
+
+- **Returns:** File count, chunk count, languages, dependencies
+
+- **Use when:** Understanding index status for a specific repo
+
+**`reindex_repo`** - Force reindex a repository
+
+- **Parameters:** `repo_name`, `force` (optional)
+
+- **Use when:** Code has changed and you want to refresh the index
+
+### Cross-Repo Analysis
+
+**`get_cross_repo_dependencies`** - Find dependencies between repositories
+
+- **Returns:** Map of which repos depend on which
+
+- **Use when:** Understanding relationships between multiple codebases
+
+**`suggest_missing_repos`** - Suggest repositories to add
+
+- **Returns:** List of repos that are imported but not indexed
+
+- **Use when:** Discovering missing dependencies in your stack
+
+**`get_stack_status`** - Get overall stack status
+
+- **Returns:** Summary of all indexed repos, total files, languages
+
+- **Use when:** Getting an overview of your entire indexed stack
 
 ## CLI Commands
 
@@ -286,7 +356,29 @@ Claude Code then: Analyzes the returned code and provides a comprehensive answer
 
 - "How are dependencies managed?"
 
-### Semantic Search
+### Using Semantic Search (Advanced)
+
+The `semantic_search`tool is lower-level than`answer_question` and returns raw search results. Use it when you need programmatic access to search results or want to build your own analysis on top.
+
+**Via MCP:**
+
+```
+
+## AI agent calls:
+
+semantic_search(query="authentication logic", limit=10)
+
+## Returns:
+
+1. src/auth/login.py:45 (authenticate_user) - Score: 0.92
+   [code snippet]
+2. src/auth/tokens.py:12 (generate_token) - Score: 0.87
+   [code snippet]
+...
+
+```
+
+**Via Python API:**
 
 ```python
 
@@ -309,9 +401,28 @@ for result in results:
 
 ```
 
-### Find Symbol Definitions
+### Finding Symbol Definitions and References
+
+**Via MCP:**
+
+```
+
+## Find where a symbol is defined:
+
+find_definition(symbol="authenticate_user")
+
+## Find all usages:
+
+find_references(symbol="authenticate_user")
+
+```
+
+**Via Python API:**
 
 ```python
+
+# Find definition
+
 results = store.find_by_symbol(
     symbol_name="authenticate_user",
     repo_filter=["my-backend"]
