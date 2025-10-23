@@ -564,27 +564,32 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                     text=f"No relevant code found for question: '{question}'"
                 )]
 
-            # Build context from search results
-            output = [f"Retrieved {len(search_results)} relevant code snippet(s) for: '{question}'\n"]
+            # Build context from search results - concise format for agent
+            # Collect file paths for reference
+            file_refs = []
+            for result in search_results:
+                file_ref = f"{result.file_path}:{result.metadata.get('start_line', '?')}"
+                if file_ref not in file_refs:
+                    file_refs.append(file_ref)
+
+            # Build compact context for the agent
+            output = []
+            output.append(f"Found {len(search_results)} relevant code snippets. Analyzing to answer: '{question}'\n")
 
             for i, result in enumerate(search_results, 1):
-                output.append(f"\n{'='*80}")
-                output.append(f"Code Snippet {i}")
-                output.append(f"{'='*80}")
-                output.append(f"File: {result.file_path}")
-                output.append(f"Repository: {result.repo_name}")
-                if result.symbol_name:
-                    output.append(f"Symbol: {result.symbol_name}")
-                output.append(f"Lines: {result.metadata.get('start_line', '?')}-{result.metadata.get('end_line', '?')}")
-                output.append(f"Type: {result.metadata.get('chunk_type', 'unknown')}")
-                output.append(f"Relevance Score: {result.score:.4f}")
-                output.append(f"\nCode:")
+                # Concise format - just enough for agent to understand context
+                symbol = f" ({result.symbol_name})" if result.symbol_name else ""
+                output.append(f"{i}. {result.file_path}:{result.metadata.get('start_line', '?')}{symbol}")
                 output.append(f"```{result.metadata.get('language', '')}")
                 output.append(result.code_text)
-                output.append("```\n")
+                output.append("```")
 
-            output.append(f"\n{'='*80}")
-            output.append("Use the code snippets above to answer the question.")
+            # Add file reference list at the end
+            output.append(f"\nRelevant files:")
+            for ref in file_refs:
+                output.append(f"- {ref}")
+
+            output.append("\nAnalyze the code above and provide a clear answer, referencing specific files where appropriate.")
 
             return [TextContent(type="text", text="\n".join(output))]
 
