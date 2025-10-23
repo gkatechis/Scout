@@ -284,7 +284,7 @@ The MCP server exposes 13 tools organized by functionality:
 Check which repos need reindexing:
 
 ```bash
-python3 -m mcpindexer check-updates
+mcpindexer check-updates
 
 ```
 
@@ -293,7 +293,7 @@ python3 -m mcpindexer check-updates
 Automatically reindex repos with new commits:
 
 ```bash
-python3 -m mcpindexer reindex-changed
+mcpindexer reindex-changed
 
 ```
 
@@ -302,7 +302,7 @@ python3 -m mcpindexer reindex-changed
 View current stack status:
 
 ```bash
-python3 -m mcpindexer status
+mcpindexer status
 
 ```
 
@@ -311,7 +311,7 @@ python3 -m mcpindexer status
 Auto-reindex on git pull:
 
 ```bash
-python3 -m mcpindexer install-hook /path/to/repo
+mcpindexer install-hook /path/to/repo
 
 ```
 
@@ -626,7 +626,7 @@ indexer.repo_indexers['my-repo'].reindex(force=True)
 
 # Or use CLI
 
-python3 -m mcpindexer reindex-changed
+mcpindexer reindex-changed
 
 ```
 

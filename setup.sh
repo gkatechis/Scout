@@ -54,6 +54,12 @@ pip install -r "$SCRIPT_DIR/requirements.txt"
 echo "✓ Dependencies installed"
 echo ""
 
+# Install mcpindexer as CLI tool
+echo "Installing mcpindexer CLI..."
+pip install -e "$SCRIPT_DIR"
+echo "✓ mcpindexer CLI installed"
+echo ""
+
 # Create .mcp.json if it doesn't exist
 if [ ! -f "$SCRIPT_DIR/.mcp.json" ]; then
     echo "Creating .mcp.json configuration..."
