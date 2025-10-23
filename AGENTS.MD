@@ -121,6 +121,33 @@ bd graph
 4. **Close issues when done**: Mark completed work to unblock dependent tasks
 5. **Document decisions**: Use `bd comment` to record why certain approaches were chosen
 6. **Commit Beads database**: The `.beads/` directory and `beads.db` should be committed to git
+7. **Always prompt for private labels**: When creating new issues, use AskUserQuestion to determine if the issue should be labeled as private (see Private Issue Labeling below)
+
+### Private Issue Labeling
+
+This project uses git hooks to filter private issues from version control. **Always prompt the user** when creating new issues to determine if they should be kept private.
+
+**When to prompt:**
+- Creating any new issue with `bd create`
+- When issue content mentions: Zendesk, internal projects, proprietary systems, private repositories
+
+**How to prompt:**
+Use AskUserQuestion with:
+- Question: "Should this issue be kept private (local-only)?"
+- Options:
+  - "Public" - Issue will be pushed to remote repository
+  - "Private (Zendesk)" - Label with `zendesk` (filtered from git)
+  - "Private (Internal)" - Label with `internal` (filtered from git)
+
+**After creating the issue:**
+```bash
+# If user selected private, apply the label:
+bd label add <issue-id> zendesk
+# or
+bd label add <issue-id> internal
+```
+
+The pre-commit hook automatically filters labeled issues from `.beads/issues.jsonl` before pushing to remote.
 
 ### Common Beads Commands Reference
 
