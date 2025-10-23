@@ -127,45 +127,58 @@ export MCP_INDEXER_DB_PATH=~/.mcpindexer/db  # Optional, defaults to this locati
 
 ## Quick Start
 
-### 1. Try the Demo
+### 1. Add Repositories to Index
+
+The easiest way to add repositories is using the CLI:
+
+```bash
+# Activate the virtual environment (if you used setup.sh)
+source venv/bin/activate
+
+# Add a local repository
+mcpindexer add /path/to/local/repo
+
+# Add a repository from GitHub (auto-clones and indexes)
+mcpindexer add https://github.com/user/repo
+
+# Specify a custom name
+mcpindexer add https://github.com/user/repo --name my-custom-name
+
+# Clone to a specific directory
+mcpindexer add https://github.com/user/repo --clone-dir ~/projects
+```
+
+### 2. Try the Demo
 
 Run the demo to see mcpIndexer in action:
 
 ```bash
-
-# If you used setup.sh, activate the virtual environment first:
-
-source venv/bin/activate
-
 python3 examples/demo.py
-
 ```
 
-### 2. Index Your Repositories
+### 3. Index Repositories Programmatically (Alternative)
+
+You can also add repositories using Python:
 
 ```python
-
 import os
 from mcpindexer.indexer import MultiRepoIndexer
 from mcpindexer.embeddings import EmbeddingStore
 
 # Initialize with your database path
-
 db_path = os.getenv("MCP_INDEXER_DB_PATH", os.path.expanduser("~/.mcpindexer/db"))
 store = EmbeddingStore(db_path=db_path, collection_name='mcp_code_index')
 indexer = MultiRepoIndexer(store)
 
 # Add and index your repository
-
 indexer.add_repo(
     repo_path='/path/to/your/repo',
     repo_name='my-repo',
     auto_index=True
 )
-
 ```
 
-### 3. Use with MCP Clients
+### 4. Use with MCP Clients
 
 Once configured in `.mcp.json`, the MCP server automatically starts when you use an MCP client like Claude Code.
 
@@ -279,13 +292,30 @@ The MCP server exposes 13 tools organized by functionality:
 
 ## CLI Commands
 
+### Add Repository
+
+Add a repository to the index (local path or GitHub URL):
+
+```bash
+# Add local repository
+mcpindexer add /path/to/repo
+
+# Add from GitHub (auto-clones)
+mcpindexer add https://github.com/user/repo
+
+# With custom name
+mcpindexer add https://github.com/user/repo --name my-repo
+
+# Specify clone directory (default: ~/Code)
+mcpindexer add https://github.com/user/repo --clone-dir ~/projects
+```
+
 ### Check for Updates
 
 Check which repos need reindexing:
 
 ```bash
 mcpindexer check-updates
-
 ```
 
 ### Reindex Changed Repos
@@ -294,7 +324,6 @@ Automatically reindex repos with new commits:
 
 ```bash
 mcpindexer reindex-changed
-
 ```
 
 ### Stack Status
@@ -303,7 +332,6 @@ View current stack status:
 
 ```bash
 mcpindexer status
-
 ```
 
 ### Install Git Hooks
@@ -312,7 +340,6 @@ Auto-reindex on git pull:
 
 ```bash
 mcpindexer install-hook /path/to/repo
-
 ```
 
 This installs a post-merge hook that triggers reindexing after pulls.

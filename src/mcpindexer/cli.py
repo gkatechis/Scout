@@ -6,6 +6,8 @@ Provides commands for managing the repository stack and triggering reindexing.
 import os
 import sys
 import argparse
+import subprocess
+import re
 from pathlib import Path
 from mcpindexer.indexer import MultiRepoIndexer, RepoIndexer
 from mcpindexer.embeddings import EmbeddingStore
@@ -20,6 +22,85 @@ def get_indexer():
         collection_name="mcp_code_index"
     )
     return MultiRepoIndexer(embedding_store=embedding_store)
+
+
+def cmd_add(args):
+    """Add a repository to the index (local path or GitHub URL)"""
+    source = args.source
+    name = args.name
+    clone_dir = args.clone_dir or os.path.expanduser("~/Code")
+
+    # Determine if source is a URL or local path
+    is_url = source.startswith(('http://', 'https://', 'git@', 'git://'))
+
+    if is_url:
+        # Extract repo name from URL if not provided
+        if not name:
+            # Extract from URL: https://github.com/user/repo.git -> repo
+            match = re.search(r'/([^/]+?)(\.git)?$', source)
+            if match:
+                name = match.group(1)
+            else:
+                print("Error: Could not extract repo name from URL. Please provide --name")
+                return 1
+
+        # Clone the repository
+        repo_path = Path(clone_dir) / name
+
+        if repo_path.exists():
+            print(f"Error: Directory already exists: {repo_path}")
+            print("Use a different --name or remove the existing directory")
+            return 1
+
+        print(f"Cloning {source} to {repo_path}...")
+        try:
+            subprocess.run(['git', 'clone', source, str(repo_path)], check=True)
+            print(f"✓ Cloned successfully")
+        except subprocess.CalledProcessError as e:
+            print(f"Error: Failed to clone repository: {e}")
+            return 1
+    else:
+        # Local path
+        repo_path = Path(source).resolve()
+
+        if not repo_path.exists():
+            print(f"Error: Path does not exist: {repo_path}")
+            return 1
+
+        if not (repo_path / ".git").exists():
+            print(f"Warning: Not a git repository: {repo_path}")
+            print("Proceeding anyway...")
+
+        # Extract repo name from path if not provided
+        if not name:
+            name = repo_path.name
+
+    # Index the repository
+    print(f"\nIndexing repository '{name}' at {repo_path}...")
+
+    indexer = get_indexer()
+
+    try:
+        indexer.add_repo(
+            repo_path=str(repo_path),
+            repo_name=name,
+            auto_index=True
+        )
+
+        # Get stats from stack config
+        repo_config = indexer.stack_config.get_repo(name)
+        if repo_config:
+            print(f"✓ Successfully indexed '{name}'")
+            print(f"  Files: {repo_config.files_indexed}")
+            print(f"  Chunks: {repo_config.chunks_indexed}")
+        else:
+            print(f"✓ Successfully added '{name}'")
+
+        return 0
+
+    except Exception as e:
+        print(f"Error: Failed to index repository: {e}")
+        return 1
 
 
 def cmd_check_updates(args):
@@ -188,6 +269,16 @@ def main():
     )
 
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
+
+    # add command
+    parser_add = subparsers.add_parser(
+        "add",
+        help="Add a repository to index (local path or GitHub URL)"
+    )
+    parser_add.add_argument("source", help="GitHub URL or local path to repository")
+    parser_add.add_argument("--name", help="Name for the repository (auto-detected if not provided)")
+    parser_add.add_argument("--clone-dir", help="Directory to clone into (default: ~/Code)")
+    parser_add.set_defaults(func=cmd_add)
 
     # check-updates command
     parser_check = subparsers.add_parser(
