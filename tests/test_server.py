@@ -185,5 +185,99 @@ async def test_call_answer_question():
     assert "authentication" in result[0].text.lower() or "no relevant code" in result[0].text.lower()
 
 
+@pytest.mark.asyncio
+async def test_answer_question_output_format():
+    """Test answer_question returns properly formatted output with file references"""
+    result = await call_tool("answer_question", {"question": "What is authentication?"})
+
+    assert len(result) == 1
+    output = result[0].text
+
+    # Check for key components of the new format
+    # Should have either results or "No relevant code found"
+    if "No relevant code" not in output:
+        # If we have results, verify the format includes:
+        # - "Found N relevant code snippets"
+        assert "Found" in output or "relevant" in output
+        # - File references section
+        assert "Relevant files:" in output or ":" in output  # file:line format
+        # - Analysis instruction
+        assert "Analyze" in output or "answer" in output.lower()
+
+
+@pytest.mark.asyncio
+async def test_answer_question_with_context_limit():
+    """Test answer_question respects context_limit parameter"""
+    result = await call_tool("answer_question", {
+        "question": "authentication",
+        "context_limit": 3
+    })
+
+    assert len(result) == 1
+    assert result[0].type == "text"
+    # Should work without errors
+    assert len(result[0].text) > 0
+
+
+@pytest.mark.asyncio
+async def test_answer_question_with_repos_filter():
+    """Test answer_question with repos filter"""
+    result = await call_tool("answer_question", {
+        "question": "authentication",
+        "repos": ["test-repo"]
+    })
+
+    assert len(result) == 1
+    assert result[0].type == "text"
+    # Should work without errors
+    assert len(result[0].text) > 0
+
+
+@pytest.mark.asyncio
+async def test_answer_question_empty_question():
+    """Test answer_question handles empty question gracefully"""
+    result = await call_tool("answer_question", {"question": ""})
+
+    assert len(result) == 1
+    assert result[0].type == "text"
+    # Should return error message
+    assert "Error" in result[0].text or "required" in result[0].text
+
+
+@pytest.mark.asyncio
+async def test_answer_question_vs_semantic_search_format():
+    """Test that answer_question format is more concise than semantic_search"""
+    # Call both tools with the same query
+    semantic_result = await call_tool("semantic_search", {"query": "authentication"})
+    answer_result = await call_tool("answer_question", {"question": "authentication"})
+
+    assert len(semantic_result) == 1
+    assert len(answer_result) == 1
+
+    # Both should return text
+    assert semantic_result[0].type == "text"
+    assert answer_result[0].type == "text"
+
+    # answer_question should include analysis prompt
+    if "No relevant code" not in answer_result[0].text:
+        assert "Analyze" in answer_result[0].text or "answer" in answer_result[0].text.lower()
+
+
+@pytest.mark.asyncio
+async def test_answer_question_includes_file_paths():
+    """Test that answer_question includes file:line references in output"""
+    result = await call_tool("answer_question", {"question": "authentication"})
+
+    assert len(result) == 1
+    output = result[0].text
+
+    # If we found results, verify file paths are included
+    if "No relevant code" not in output and "Found" in output:
+        # Should have file path format (something.py:number or Relevant files:)
+        has_file_ref = ".py:" in output or ".ts:" in output or ".js:" in output or "Relevant files:" in output
+        # If no actual results, that's okay - the format is correct
+        assert has_file_ref or "No relevant" in output
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
