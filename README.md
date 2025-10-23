@@ -37,17 +37,17 @@ MCP Indexer provides intelligent code search capabilities to any MCP-compatible 
 1. Clone the repository:
 
 ```bash
-git clone <https://github.com/gkatechis/mcpIndexer.git>
+git clone <<https://github.com/gkatechis/mcpIndexer.git>>
 cd mcpIndexer
 
-```text
+```
 
 2. Run the setup script:
 
 ```bash
 ./setup.sh
 
-```text
+```
 
 This script will:
 
@@ -65,22 +65,22 @@ This script will:
 
 ```bash
 
-## Add to ~/.zshrc or ~/.bashrc
+# Add to ~/.zshrc or ~/.bashrc
 
 export PYTHONPATH="/absolute/path/to/mcpIndexer/src:$PYTHONPATH"
 export MCP_INDEXER_DB_PATH=~/.mcpindexer/db
 
-```text
+```
 
 ### Manual Setup (Alternative)
 
 1. Clone the repository:
 
 ```bash
-git clone <https://github.com/gkatechis/mcpIndexer.git>
+git clone <<https://github.com/gkatechis/mcpIndexer.git>>
 cd mcpIndexer
 
-```text
+```
 
 2. Create and activate a virtual environment:
 
@@ -88,37 +88,34 @@ cd mcpIndexer
 python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-```text
+```
 
 3. Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 
-## OR install as editable package:
+# OR install as editable package:
 
+# pip install -e .
 
-## pip install -e .
-
-
-```text
+```
 
 4. Create configuration directory:
 
 ```bash
 mkdir -p ~/.mcpindexer
 
-```text
+```
 
 5. Configure MCP integration (for Claude Code or other MCP clients):
 
 ```bash
 cp .mcp.json.example .mcp.json
 
-## Edit .mcp.json and update paths to your installation directory
+# Edit .mcp.json and update paths to your installation directory
 
-
-```text
+```
 
 6. Set up environment variables:
 
@@ -126,7 +123,7 @@ cp .mcp.json.example .mcp.json
 export PYTHONPATH=/absolute/path/to/mcpIndexer/src
 export MCP_INDEXER_DB_PATH=~/.mcpindexer/db  # Optional, defaults to this location
 
-```text
+```
 
 ## Quick Start
 
@@ -136,13 +133,13 @@ Run the demo to see mcpIndexer in action:
 
 ```bash
 
-## If you used setup.sh, activate the virtual environment first:
+# If you used setup.sh, activate the virtual environment first:
 
 source venv/bin/activate
 
 python3 examples/demo.py
 
-```text
+```
 
 ### 2. Index Your Repositories
 
@@ -152,13 +149,13 @@ import os
 from mcpindexer.indexer import MultiRepoIndexer
 from mcpindexer.embeddings import EmbeddingStore
 
-## Initialize with your database path
+# Initialize with your database path
 
 db_path = os.getenv("MCP_INDEXER_DB_PATH", os.path.expanduser("~/.mcpindexer/db"))
 store = EmbeddingStore(db_path=db_path, collection_name='mcp_code_index')
 indexer = MultiRepoIndexer(store)
 
-## Add and index your repository
+# Add and index your repository
 
 indexer.add_repo(
     repo_path='/path/to/your/repo',
@@ -166,7 +163,7 @@ indexer.add_repo(
     auto_index=True
 )
 
-```text
+```
 
 ### 3. Use with MCP Clients
 
@@ -219,7 +216,7 @@ Check which repos need reindexing:
 ```bash
 python3 -m mcpindexer check-updates
 
-```text
+```
 
 ### Reindex Changed Repos
 
@@ -228,7 +225,7 @@ Automatically reindex repos with new commits:
 ```bash
 python3 -m mcpindexer reindex-changed
 
-```text
+```
 
 ### Stack Status
 
@@ -237,7 +234,7 @@ View current stack status:
 ```bash
 python3 -m mcpindexer status
 
-```text
+```
 
 ### Install Git Hooks
 
@@ -246,7 +243,7 @@ Auto-reindex on git pull:
 ```bash
 python3 -m mcpindexer install-hook /path/to/repo
 
-```text
+```
 
 This installs a post-merge hook that triggers reindexing after pulls.
 
@@ -264,7 +261,7 @@ The `answer_question` tool retrieves relevant code context for your questions. W
 
 **Example usage with Claude Code:**
 
-```text
+```
 User: "How does authentication work in this codebase?"
 
 Claude Code calls: answer_question(question="How does authentication work in this codebase?")
@@ -273,7 +270,7 @@ Tool returns: Code snippets from authentication-related files
 
 Claude Code then: Analyzes the returned code and provides a comprehensive answer
 
-```text
+```
 
 **No API keys needed!** The tool just retrieves context - your AI agent does the analysis.
 
@@ -299,7 +296,7 @@ from mcpindexer.embeddings import EmbeddingStore
 db_path = os.getenv("MCP_INDEXER_DB_PATH", os.path.expanduser("~/.mcpindexer/db"))
 store = EmbeddingStore(db_path=db_path, collection_name='mcp_code_index')
 
-## Natural language queries
+# Natural language queries
 
 results = store.semantic_search(
     query="authentication logic",
@@ -310,7 +307,7 @@ for result in results:
     print(f"{result.file_path}:{result.metadata['start_line']}")
     print(f"  {result.symbol_name} - Score: {result.score:.4f}")
 
-```text
+```
 
 ### Find Symbol Definitions
 
@@ -320,7 +317,7 @@ results = store.find_by_symbol(
     repo_filter=["my-backend"]
 )
 
-```text
+```
 
 ### Cross-Repo Dependencies
 
@@ -330,15 +327,15 @@ from mcpindexer.indexer import MultiRepoIndexer
 
 indexer = MultiRepoIndexer(store)
 
-## Find dependencies between repos
+# Find dependencies between repos
 
 cross_deps = indexer.get_cross_repo_dependencies()
 
-## Suggest missing repos to add
+# Suggest missing repos to add
 
 suggestions = indexer.suggest_missing_repos()
 
-```text
+```
 
 ## Configuration
 
@@ -370,7 +367,7 @@ Configuration is stored at `~/.mcpindexer/stack.json`:
   }
 }
 
-```text
+```
 
 ## Architecture
 
@@ -387,14 +384,14 @@ Configuration is stored at `~/.mcpindexer/stack.json`:
 
 ### Indexing Pipeline
 
-```text
+```
 Code File → Parser → AST → Chunker → Semantic Chunks
                                             ↓
                                       Embeddings
                                             ↓
                                       ChromaDB Store
 
-```text
+```
 
 ## Performance
 
@@ -417,7 +414,7 @@ Based on testing with real-world repos:
 ```bash
 pip install -r requirements.txt
 
-```text
+```
 
 ### Issue: Slow indexing
 
@@ -487,19 +484,19 @@ pip install -r requirements.txt
 
 ```bash
 
-## Check hook exists and is executable
+# Check hook exists and is executable
 
 ls -la /path/to/repo/.git/hooks/post-merge
 
-## Make executable
+# Make executable
 
 chmod +x /path/to/repo/.git/hooks/post-merge
 
-## Test manually
+# Test manually
 
 cd /path/to/repo && .git/hooks/post-merge
 
-```text
+```
 
 ### Issue: Stale results after code changes
 
@@ -507,8 +504,7 @@ cd /path/to/repo && .git/hooks/post-merge
 
 ```bash
 
-
-## Force reindex specific repo
+# Force reindex specific repo
 
 python3 -c "
 from mcpindexer.indexer import MultiRepoIndexer, EmbeddingStore
@@ -517,11 +513,11 @@ indexer = MultiRepoIndexer(store)
 indexer.repo_indexers['my-repo'].reindex(force=True)
 "
 
-## Or use CLI
+# Or use CLI
 
 python3 -m mcpindexer reindex-changed
 
-```text
+```
 
 ## Example Queries
 
@@ -569,21 +565,20 @@ python3 -m mcpindexer reindex-changed
 
 ```bash
 
-
-## Run all tests
+# Run all tests
 
 export PYTHONPATH=/path/to/mcpIndexer/src
 python3 -m pytest tests/ -v
 
-## Run specific test file
+# Run specific test file
 
 python3 -m pytest tests/test_embeddings.py -v
 
-## Run example scripts
+# Run example scripts
 
 python3 examples/demo.py
 
-```text
+```
 
 See the `examples/` directory for more usage examples.
 
