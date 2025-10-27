@@ -8,6 +8,7 @@ venv/
 env/
 ENV/
 .venv/
+*.egg-info/
 
 # ChromaDB and local data
 chroma_data/
@@ -40,6 +41,9 @@ Thumbs.db
 # Beads issue tracker
 # .beads/issues.jsonl is committed (source of truth)
 # .beads/*.db is ignored (local SQLite cache)
+.beads/daemon.lock
+.beads/daemon.log
+.beads/daemon.pid
 
 # Local configuration
 .mcpindexer/
