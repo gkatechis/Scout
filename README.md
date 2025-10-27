@@ -2,6 +2,24 @@
 
 Semantic code search indexer for AI tools via the Model Context Protocol (MCP).
 
+⚡ **Want to get started quickly?** See [QUICKSTART.md](QUICKSTART.md) for a 5-minute setup guide.
+
+## Documentation
+
+- **[QUICKSTART.md](QUICKSTART.md)** - Get running in 5 minutes
+
+- **[README.md](README.md)** (this file) - Complete documentation and reference
+
+- **[docs/CONFIGURATION.md](docs/CONFIGURATION.md)** - Detailed configuration and advanced options
+
+- **[TESTING.md](TESTING.md)** - Testing guide and pre-release checklist
+
+- **[examples/README.md](examples/README.md)** - Example scripts and usage patterns
+
+- **[AGENTS.MD](AGENTS.MD)** - Instructions for AI coding agents
+
+**Note**: The root directory contains Zendesk-specific documentation files (`ZENDESK_*.md`) that demonstrate mcpIndexer usage with a large organization's codebase. These serve as examples and can be adapted for your organization.
+
 ## For AI Coding Agents
 
 **If you're an AI agent working on this project**, please read [AGENTS.MD](AGENTS.MD) first. It contains instructions for using Beads issue tracking to manage tasks systematically across sessions.
@@ -26,28 +44,38 @@ MCP Indexer provides intelligent code search capabilities to any MCP-compatible 
 
 ## Installation
 
+**Quick Start:** Most users should use the [Automated Setup](#automated-setup-recommended) below. Use [Manual Setup](#manual-setup-alternative) only if the automated script fails or you need custom configuration.
+
 ### Prerequisites
 
 **Python 3.8 or higher** - Check your version:
 
 ```bash
 python3 --version
-```
+
+```text
 
 If you need to install or upgrade Python:
 
-- **macOS**: `brew install python@3.11` or download from <https://python.org/downloads/>
+- **macOS**: `brew install python@3.11` or download from <<<<https://python.org/downloads/>>>>
+
 - **Ubuntu/Debian**: `sudo apt install python3.11 python3.11-venv`
-- **Windows**: Download from <https://python.org/downloads/>
+
+- **Windows**: Download from <<<<https://python.org/downloads/>>>>
 
 **Multiple Python versions?** If you have several versions installed, specify which one to use when creating the virtual environment:
 
 ```bash
-# Use specific Python version for venv
+
+## Use specific Python version for venv
+
 python3.11 -m venv venv
-# or
+
+## or
+
 python3.9 -m venv venv
-```
+
+```text
 
 **Why virtual environments?** They isolate dependencies per project, preventing conflicts between different Python projects on your system.
 
@@ -56,17 +84,17 @@ python3.9 -m venv venv
 1. Clone the repository:
 
 ```bash
-git clone <<<<https://github.com/gkatechis/mcpIndexer.git>>>>
+git clone <<<<<<<https://github.com/gkatechis/mcpIndexer.git>>>>>>>
 cd mcpIndexer
 
-```
+```text
 
 2. Run the setup script:
 
 ```bash
 ./setup.sh
 
-```
+```text
 
 This script will:
 
@@ -78,28 +106,40 @@ This script will:
 
 - Create the `~/.mcpindexer` directory
 
-- Show you environment variables to add to your shell profile
+- Optionally add a shell alias for easy venv activation
 
-3. Add environment variables to your shell profile (optional, for CLI usage):
+**That's it!** No environment variables are required for basic usage.
 
-```bash
+**Tip**: During setup, you can add a `mcpindexer-shell` alias to easily activate the virtual environment in future terminal sessions.
 
-# Add to ~/.zshrc or ~/.bashrc
+### Environment Variables (Optional)
 
-export PYTHONPATH="/absolute/path/to/mcpIndexer/src:$PYTHONPATH"
-export MCP_INDEXER_DB_PATH=~/.mcpindexer/db
+Environment variables are **optional** - setup.sh configures sensible defaults.
 
-```
+For advanced configuration (custom database paths, etc.), see [CONFIGURATION.md](docs/CONFIGURATION.md).
 
 ### Manual Setup (Alternative)
+
+**Use this method only if:**
+
+- The automated setup script fails
+
+- You need custom Python version or dependency management
+
+- You're integrating mcpIndexer into an existing project
+
+Otherwise, use [Automated Setup](#automated-setup-recommended) above.
+
+<details>
+<summary>Click to expand manual setup instructions</summary>
 
 1. Clone the repository:
 
 ```bash
-git clone <<<<https://github.com/gkatechis/mcpIndexer.git>>>>
+git clone <<<<<<<https://github.com/gkatechis/mcpIndexer.git>>>>>>>
 cd mcpIndexer
 
-```
+```text
 
 2. Create and activate a virtual environment:
 
@@ -107,65 +147,103 @@ cd mcpIndexer
 python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-```
+```text
 
 3. Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 
-# OR install as editable package:
+## OR install as editable package:
 
-# pip install -e .
+## pip install -e .
 
-```
+```text
 
 4. Create configuration directory:
 
 ```bash
 mkdir -p ~/.mcpindexer
 
-```
+```text
 
 5. Configure MCP integration (for Claude Code or other MCP clients):
 
 ```bash
 cp .mcp.json.example .mcp.json
 
-# Edit .mcp.json and update paths to your installation directory
+## Edit .mcp.json and update paths to your installation directory
 
-```
+```text
 
-6. Set up environment variables:
+6. (Optional) Configure environment variables if needed:
 
-```bash
-export PYTHONPATH=/absolute/path/to/mcpIndexer/src
-export MCP_INDEXER_DB_PATH=~/.mcpindexer/db  # Optional, defaults to this location
+See [docs/CONFIGURATION.md](docs/CONFIGURATION.md) for advanced configuration options.
 
-```
+</details>
+
+---
 
 ## Quick Start
+
+**Before using any CLI commands, activate the virtual environment:**
+
+```bash
+source venv/bin/activate
+
+```text
+
+**Tip**: If you added the shell alias during setup, you can use:
+
+```bash
+mcpindexer-shell
+
+```text
+
+You'll need to activate the venv each time you open a new terminal.
+
+### Interactive Setup (Recommended for First-Time Users)
+
+The easiest way to get started is with the interactive wizard:
+
+```bash
+mcpindexer init
+
+```text
+
+This will guide you through:
+
+- Verifying your installation
+
+- Adding your first repository
+
+- Running a demo search
+
+- Learning next steps
 
 ### 1. Add Repositories to Index
 
 The easiest way to add repositories is using the CLI:
 
 ```bash
-# Activate the virtual environment (if you used setup.sh)
-source venv/bin/activate
 
-# Add a local repository
+## Add a local repository
+
 mcpindexer add /path/to/local/repo
 
-# Add a repository from GitHub (auto-clones and indexes)
-mcpindexer add https://github.com/user/repo
+## Add a repository from GitHub (auto-clones and indexes)
 
-# Specify a custom name
-mcpindexer add https://github.com/user/repo --name my-custom-name
+mcpindexer add <<<https://github.com/user/repo>>>
 
-# Clone to a specific directory
-mcpindexer add https://github.com/user/repo --clone-dir ~/projects
-```
+## Specify a custom name
+
+mcpindexer add <<<https://github.com/user/repo>>> --name my-custom-name
+
+## Clone to a specific directory
+
+mcpindexer add <<<https://github.com/user/repo>>> --clone-dir ~/projects
+
+```text
 
 ### 2. Try the Demo
 
@@ -173,33 +251,80 @@ Run the demo to see mcpIndexer in action:
 
 ```bash
 python3 examples/demo.py
-```
+
+```text
 
 ### 3. Index Repositories Programmatically (Alternative)
 
 You can also add repositories using Python:
 
 ```python
+
 import os
 from mcpindexer.indexer import MultiRepoIndexer
 from mcpindexer.embeddings import EmbeddingStore
 
-# Initialize with your database path
+## Initialize with your database path
+
 db_path = os.getenv("MCP_INDEXER_DB_PATH", os.path.expanduser("~/.mcpindexer/db"))
 store = EmbeddingStore(db_path=db_path, collection_name='mcp_code_index')
 indexer = MultiRepoIndexer(store)
 
-# Add and index your repository
+## Add and index your repository
+
 indexer.add_repo(
     repo_path='/path/to/your/repo',
     repo_name='my-repo',
     auto_index=True
 )
-```
+
+```text
 
 ### 4. Use with MCP Clients
 
 Once configured in `.mcp.json`, the MCP server automatically starts when you use an MCP client like Claude Code.
+
+## CLI Commands Reference
+
+Quick reference for all available CLI commands:
+
+```bash
+
+## Getting started
+
+mcpindexer init                           # Interactive setup wizard (recommended)
+mcpindexer check                          # Verify installation is working
+
+## Repository management
+
+mcpindexer add <path>                     # Add local repository
+mcpindexer add <url>                      # Clone and add from GitHub
+mcpindexer add <path> --name <name>       # Add with custom name
+mcpindexer status                         # Show stack status
+
+## Keeping repos up to date
+
+mcpindexer check-updates                  # Check which repos need reindexing
+mcpindexer reindex-changed                # Reindex repos with new commits
+
+## Recovery and maintenance
+
+mcpindexer recover                        # Recover from interrupted indexing
+mcpindexer recover --force                # Force recovery without confirmation
+
+## Git integration
+
+mcpindexer install-hook <repo-path>       # Auto-reindex on git pull
+
+```text
+
+For detailed help on any command:
+
+```bash
+mcpindexer --help
+mcpindexer <command> --help
+
+```text
 
 ## MCP Tools Reference
 
@@ -316,18 +441,24 @@ The MCP server exposes 13 tools organized by functionality:
 Add a repository to the index (local path or GitHub URL):
 
 ```bash
-# Add local repository
+
+## Add local repository
+
 mcpindexer add /path/to/repo
 
-# Add from GitHub (auto-clones)
-mcpindexer add https://github.com/user/repo
+## Add from GitHub (auto-clones)
 
-# With custom name
-mcpindexer add https://github.com/user/repo --name my-repo
+mcpindexer add <<<https://github.com/user/repo>>>
 
-# Specify clone directory (default: ~/Code)
-mcpindexer add https://github.com/user/repo --clone-dir ~/projects
-```
+## With custom name
+
+mcpindexer add <<<https://github.com/user/repo>>> --name my-repo
+
+## Specify clone directory (default: ~/Code)
+
+mcpindexer add <<<https://github.com/user/repo>>> --clone-dir ~/projects
+
+```text
 
 ### Check for Updates
 
@@ -335,7 +466,8 @@ Check which repos need reindexing:
 
 ```bash
 mcpindexer check-updates
-```
+
+```text
 
 ### Reindex Changed Repos
 
@@ -343,7 +475,8 @@ Automatically reindex repos with new commits:
 
 ```bash
 mcpindexer reindex-changed
-```
+
+```text
 
 ### Stack Status
 
@@ -351,7 +484,8 @@ View current stack status:
 
 ```bash
 mcpindexer status
-```
+
+```text
 
 ### Install Git Hooks
 
@@ -359,7 +493,8 @@ Auto-reindex on git pull:
 
 ```bash
 mcpindexer install-hook /path/to/repo
-```
+
+```text
 
 This installs a post-merge hook that triggers reindexing after pulls.
 
@@ -377,7 +512,7 @@ The `answer_question` tool retrieves relevant code context for your questions. W
 
 **Example usage with Claude Code:**
 
-```
+```text
 User: "How does authentication work in this codebase?"
 
 Claude Code calls: answer_question(question="How does authentication work in this codebase?")
@@ -386,7 +521,7 @@ Tool returns: Code snippets from authentication-related files
 
 Claude Code then: Analyzes the returned code and provides a comprehensive answer
 
-```
+```text
 
 **No API keys needed!** The tool just retrieves context - your AI agent does the analysis.
 
@@ -408,7 +543,7 @@ The `semantic_search`tool is lower-level than`answer_question` and returns raw s
 
 **Via MCP:**
 
-```
+```text
 
 ## AI agent calls:
 
@@ -422,7 +557,7 @@ semantic_search(query="authentication logic", limit=10)
    [code snippet]
 ...
 
-```
+```text
 
 **Via Python API:**
 
@@ -434,7 +569,7 @@ from mcpindexer.embeddings import EmbeddingStore
 db_path = os.getenv("MCP_INDEXER_DB_PATH", os.path.expanduser("~/.mcpindexer/db"))
 store = EmbeddingStore(db_path=db_path, collection_name='mcp_code_index')
 
-# Natural language queries
+## Natural language queries
 
 results = store.semantic_search(
     query="authentication logic",
@@ -445,13 +580,13 @@ for result in results:
     print(f"{result.file_path}:{result.metadata['start_line']}")
     print(f"  {result.symbol_name} - Score: {result.score:.4f}")
 
-```
+```text
 
 ### Finding Symbol Definitions and References
 
 **Via MCP:**
 
-```
+```text
 
 ## Find where a symbol is defined:
 
@@ -461,20 +596,20 @@ find_definition(symbol="authenticate_user")
 
 find_references(symbol="authenticate_user")
 
-```
+```text
 
 **Via Python API:**
 
 ```python
 
-# Find definition
+## Find definition
 
 results = store.find_by_symbol(
     symbol_name="authenticate_user",
     repo_filter=["my-backend"]
 )
 
-```
+```text
 
 ### Cross-Repo Dependencies
 
@@ -484,23 +619,19 @@ from mcpindexer.indexer import MultiRepoIndexer
 
 indexer = MultiRepoIndexer(store)
 
-# Find dependencies between repos
+## Find dependencies between repos
 
 cross_deps = indexer.get_cross_repo_dependencies()
 
-# Suggest missing repos to add
+## Suggest missing repos to add
 
 suggestions = indexer.suggest_missing_repos()
 
-```
+```text
 
 ## Configuration
 
-### Environment Variables
-
-- `MCP_INDEXER_DB_PATH`- Database path (default:`~/.mcpindexer/db`)
-
-- `PYTHONPATH`- Must include the`src/` directory of your installation
+For detailed configuration options including environment variables, custom database locations, MCP setup, and advanced features, see [docs/CONFIGURATION.md](docs/CONFIGURATION.md).
 
 ### Stack Configuration
 
@@ -524,7 +655,7 @@ Configuration is stored at `~/.mcpindexer/stack.json`:
   }
 }
 
-```
+```text
 
 ## Architecture
 
@@ -541,14 +672,14 @@ Configuration is stored at `~/.mcpindexer/stack.json`:
 
 ### Indexing Pipeline
 
-```
+```text
 Code File → Parser → AST → Chunker → Semantic Chunks
                                             ↓
                                       Embeddings
                                             ↓
                                       ChromaDB Store
 
-```
+```text
 
 ## Performance
 
@@ -569,7 +700,9 @@ Based on testing with real-world repos:
 **Symptoms**:
 
 - "ModuleNotFoundError" when running mcpindexer
+
 - "version conflict" errors during installation
+
 - Dependencies fail to install
 
 **Solutions**:
@@ -578,11 +711,13 @@ Based on testing with real-world repos:
 
    ```bash
    python3 --version
-   ```
+
+```text
 
 2. **Create a fresh virtual environment with a specific Python version**:
 
    ```bash
+
    # Remove old venv if it exists
    rm -rf venv
 
@@ -595,14 +730,16 @@ Based on testing with real-world repos:
 
    # Install dependencies
    pip install -e .
-   ```
+
+```text
 
 3. **Still having issues?** Install from requirements.txt first:
 
    ```bash
    pip install -r requirements.txt
    pip install -e .
-   ```
+
+```text
 
 ### Issue: "ModuleNotFoundError: No module named 'tree_sitter'"
 
@@ -612,7 +749,33 @@ Based on testing with real-world repos:
 source venv/bin/activate
 pip install -r requirements.txt
 
-```
+```text
+
+### Debug Logging
+
+For troubleshooting issues, you can enable debug logging with the `--debug`or`--verbose` flags:
+
+```bash
+
+## Enable verbose output (INFO level logging)
+
+mcpindexer --verbose <command>
+
+## Enable debug output (DEBUG level logging, saves to file)
+
+mcpindexer --debug <command>
+
+```text
+
+Debug logs are written to: `~/.mcpindexer/logs/mcpindexer.log`
+
+This is helpful when:
+
+- Investigating indexing failures
+
+- Understanding performance bottlenecks
+
+- Reporting bugs (include log excerpts)
 
 ### Issue: Slow indexing
 
@@ -674,27 +837,49 @@ pip install -r requirements.txt
 
 - Hook not executable
 
-- PYTHONPATH not set
-
 - Hook overwritten
+
+- Virtual environment not activated
 
 **Solutions**:
 
 ```bash
 
-# Check hook exists and is executable
+## Check hook exists and is executable
 
 ls -la /path/to/repo/.git/hooks/post-merge
 
-# Make executable
+## Make executable
 
 chmod +x /path/to/repo/.git/hooks/post-merge
 
-# Test manually
+## Test manually
 
 cd /path/to/repo && .git/hooks/post-merge
 
-```
+```text
+
+### Issue: Interrupted indexing
+
+**Symptoms**:
+
+- Repository stuck in "indexing" status
+
+- Indexing process was killed or crashed
+
+**Solutions**:
+
+```bash
+
+## Check for stuck repositories
+
+mcpindexer status
+
+## Recover automatically
+
+mcpindexer recover
+
+```text
 
 ### Issue: Stale results after code changes
 
@@ -702,20 +887,22 @@ cd /path/to/repo && .git/hooks/post-merge
 
 ```bash
 
-# Force reindex specific repo
+## Force reindex specific repo
 
 python3 -c "
 from mcpindexer.indexer import MultiRepoIndexer, EmbeddingStore
-store = EmbeddingStore('./mcp_index_data', 'mcp_code_index')
+import os
+db_path = os.path.expanduser('~/.mcpindexer/db')
+store = EmbeddingStore(db_path, 'mcp_code_index')
 indexer = MultiRepoIndexer(store)
 indexer.repo_indexers['my-repo'].reindex(force=True)
 "
 
-# Or use CLI
+## Or use CLI
 
 mcpindexer reindex-changed
 
-```
+```text
 
 ## Example Queries
 
@@ -763,20 +950,23 @@ mcpindexer reindex-changed
 
 ```bash
 
-# Run all tests
+## Activate virtual environment first
 
-export PYTHONPATH=/path/to/mcpIndexer/src
-python3 -m pytest tests/ -v
+source venv/bin/activate
 
-# Run specific test file
+## Run all tests (PYTHONPATH not needed - configured in pyproject.toml)
 
-python3 -m pytest tests/test_embeddings.py -v
+pytest tests/ -v
 
-# Run example scripts
+## Run specific test file
+
+pytest tests/test_embeddings.py -v
+
+## Run example scripts
 
 python3 examples/demo.py
 
-```
+```text
 
 See the `examples/` directory for more usage examples.
 

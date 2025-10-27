@@ -1,14 +1,25 @@
 {
   "mcpServers": {
     "mcpindexer": {
-      "command": "python3",
+      "command": "/absolute/path/to/mcpIndexer/venv/bin/python3",
       "args": [
         "/absolute/path/to/mcpIndexer/src/mcpindexer/server.py"
       ],
       "env": {
-        "PYTHONPATH": "/absolute/path/to/mcpIndexer/src",
         "MCP_INDEXER_DB_PATH": "~/.mcpindexer/db"
       }
     }
   }
 }
+
+// IMPORTANT: This is just an example. setup.sh will automatically generate
+// a .mcp.json with the correct paths for your system.
+//
+// If you need to create this manually, replace:
+//   - /absolute/path/to/mcpIndexer  →  actual path from: pwd
+//   - python3                       →  venv python: /path/to/venv/bin/python3
+//
+// To get your actual path, run:
+//   cd mcpIndexer && pwd
+//
+// Note: PYTHONPATH is NOT included because pip install -e . makes it unnecessary

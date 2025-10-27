@@ -13,8 +13,8 @@ import tempfile
 import shutil
 from pathlib import Path
 
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parent / "src"))
+# Note: This demo requires mcpindexer to be installed (pip install -e .)
+# No sys.path hacks needed when using proper installation!
 
 from mcpindexer.parser import CodeParser
 from mcpindexer.chunker import CodeChunker

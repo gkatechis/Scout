@@ -77,8 +77,25 @@ result = indexer.add_repo(
 results = store.semantic_search("authentication logic", n_results=10)
 ```
 
+## Running Examples
+
+**Prerequisites**:
+1. Complete setup: Run `./setup.sh` from the project root (see [README.md](../README.md))
+2. Activate the virtual environment: `source venv/bin/activate`
+
+Then run any example:
+```bash
+python3 examples/demo.py
+```
+
+## Configuration
+
+Examples use the same configuration as the main CLI. See:
+- [README.md](../README.md) - Quick start and basic usage
+- [docs/CONFIGURATION.md](../docs/CONFIGURATION.md) - Advanced configuration
+
 ## Notes
 
 - These are examples and may need modification for your specific use case
-- All scripts assume `PYTHONPATH` includes the `src/` directory
-- Database paths can be configured via `MCP_INDEXER_DB_PATH` environment variable
+- Edit hardcoded paths in scripts to match your local setup
+- Examples assume you've completed installation with `pip install -e .`

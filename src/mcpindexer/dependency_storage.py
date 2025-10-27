@@ -3,6 +3,7 @@ Dependency storage and persistence
 
 Saves and loads dependency graphs to/from JSON files
 """
+
 import json
 from pathlib import Path
 from typing import Dict, List, Optional, Set
@@ -11,7 +12,11 @@ from typing import Dict, List, Optional, Set
 class DependencyStorage:
     """Manages persistent storage of dependency graphs"""
 
-    def __init__(self, storage_path: Optional[str] = None, org_prefixes: Optional[List[str]] = None):
+    def __init__(
+        self,
+        storage_path: Optional[str] = None,
+        org_prefixes: Optional[List[str]] = None,
+    ):
         """
         Initialize dependency storage
 
@@ -37,7 +42,7 @@ class DependencyStorage:
             return
 
         try:
-            with open(self.storage_path, 'r') as f:
+            with open(self.storage_path, "r") as f:
                 data = json.load(f)
             self.dependencies = data.get("repos", {})
         except Exception as e:
@@ -49,12 +54,9 @@ class DependencyStorage:
         # Ensure directory exists
         self.storage_path.parent.mkdir(parents=True, exist_ok=True)
 
-        data = {
-            "version": "1.0",
-            "repos": self.dependencies
-        }
+        data = {"version": "1.0", "repos": self.dependencies}
 
-        with open(self.storage_path, 'w') as f:
+        with open(self.storage_path, "w") as f:
             json.dump(data, f, indent=2)
 
     def save_repo_dependencies(
@@ -62,7 +64,7 @@ class DependencyStorage:
         repo_name: str,
         internal_deps: Dict[str, List[str]],
         external_packages: List[str],
-        cross_repo_deps: List[Dict[str, str]]
+        cross_repo_deps: List[Dict[str, str]],
     ) -> None:
         """
         Save dependencies for a repository
@@ -74,12 +76,16 @@ class DependencyStorage:
             cross_repo_deps: Cross-repository dependencies
         """
         # Filter external packages based on org prefixes if configured
-        filtered_packages = self._filter_org_packages(external_packages) if self.org_prefixes else external_packages
+        filtered_packages = (
+            self._filter_org_packages(external_packages)
+            if self.org_prefixes
+            else external_packages
+        )
 
         self.dependencies[repo_name] = {
             "internal_count": len(internal_deps),
             "external_packages": filtered_packages,
-            "cross_repo_deps": cross_repo_deps
+            "cross_repo_deps": cross_repo_deps,
         }
         self.save()
 
@@ -140,10 +146,7 @@ class DependencyStorage:
         suggestions = []
         for package in all_packages:
             # Check if package matches any indexed repo
-            is_indexed = any(
-                self._repos_match(package, repo)
-                for repo in indexed_repos
-            )
+            is_indexed = any(self._repos_match(package, repo) for repo in indexed_repos)
             if not is_indexed:
                 suggestions.append(package)
 
@@ -165,7 +168,10 @@ class DependencyStorage:
             package_lower = package.lower()
             for prefix in self.org_prefixes:
                 prefix_lower = prefix.lower()
-                if package_lower.startswith(prefix_lower) or prefix_lower in package_lower:
+                if (
+                    package_lower.startswith(prefix_lower)
+                    or prefix_lower in package_lower
+                ):
                     org_packages.append(package)
                     break
         return org_packages
@@ -184,11 +190,16 @@ class DependencyStorage:
         # Normalize package name by removing org prefixes and scopes
         package_lower = package.lower()
         for prefix in self.org_prefixes:
-            package_lower = package_lower.replace(prefix.lower(), '')
+            package_lower = package_lower.replace(prefix.lower(), "")
 
         # Remove common package/scope prefixes
-        package_lower = package_lower.replace('@', '').replace('/', '').replace('-', '').replace('_', '')
-        repo_lower = repo_name.lower().replace('-', '').replace('_', '')
+        package_lower = (
+            package_lower.replace("@", "")
+            .replace("/", "")
+            .replace("-", "")
+            .replace("_", "")
+        )
+        repo_lower = repo_name.lower().replace("-", "").replace("_", "")
 
         return package_lower in repo_lower or repo_lower in package_lower
 
@@ -206,5 +217,5 @@ class DependencyStorage:
             "total_repos_with_deps": total_repos,
             "total_cross_repo_deps": total_cross_deps,
             "total_unique_packages": len(all_packages),
-            "unique_packages": sorted(all_packages)
+            "unique_packages": sorted(all_packages),
         }

@@ -1,12 +1,15 @@
 """
 Tests for embedding generation and vector storage
 """
-import pytest
-import tempfile
+
 import shutil
+import tempfile
 from pathlib import Path
-from mcpindexer.embeddings import EmbeddingStore, SearchResult
+
+import pytest
+
 from mcpindexer.chunker import CodeChunk
+from mcpindexer.embeddings import EmbeddingStore, SearchResult
 
 
 @pytest.fixture
@@ -21,10 +24,7 @@ def temp_db_path():
 @pytest.fixture
 def embedding_store(temp_db_path):
     """Create embedding store with temporary database"""
-    store = EmbeddingStore(
-        db_path=temp_db_path,
-        collection_name="test_collection"
-    )
+    store = EmbeddingStore(db_path=temp_db_path, collection_name="test_collection")
     yield store
     # Cleanup
     store.reset()
@@ -47,7 +47,7 @@ def sample_chunks():
             parent_class=None,
             imports=["bcrypt", "jwt"],
             context_text="File: auth.py | Function: authenticate_user\n\ndef authenticate_user(username, password):\n    return check_credentials(username, password)",
-            token_count=50
+            token_count=50,
         ),
         CodeChunk(
             chunk_id="test-repo:chunk:2",
@@ -62,7 +62,7 @@ def sample_chunks():
             parent_class=None,
             imports=["dataclasses"],
             context_text="File: user.py | Class: User\n\nclass User:\n    def __init__(self, name):\n        self.name = name",
-            token_count=40
+            token_count=40,
         ),
         CodeChunk(
             chunk_id="other-repo:chunk:1",
@@ -77,8 +77,8 @@ def sample_chunks():
             parent_class=None,
             imports=["auth"],
             context_text="File: login.js | Function: login\n\nfunction login(username, password) {\n    return authenticateUser(username, password);\n}",
-            token_count=45
-        )
+            token_count=45,
+        ),
     ]
 
 
@@ -97,13 +97,13 @@ class TestEmbeddingStore:
 
         # Verify chunks were added by checking collection size
         results = embedding_store.collection.get()
-        assert len(results['ids']) == 3
+        assert len(results["ids"]) == 3
 
     def test_add_empty_chunks(self, embedding_store):
         """Test adding empty list of chunks"""
         embedding_store.add_chunks([])
         results = embedding_store.collection.get()
-        assert len(results['ids']) == 0
+        assert len(results["ids"]) == 0
 
     def test_semantic_search(self, embedding_store, sample_chunks):
         """Test semantic search functionality"""
@@ -125,9 +125,7 @@ class TestEmbeddingStore:
 
         # Search only in test-repo
         results = embedding_store.semantic_search(
-            "authentication",
-            n_results=10,
-            repo_filter=["test-repo"]
+            "authentication", n_results=10, repo_filter=["test-repo"]
         )
 
         assert len(results) > 0
@@ -139,13 +137,11 @@ class TestEmbeddingStore:
 
         # Search only Python code
         results = embedding_store.semantic_search(
-            "user",
-            n_results=10,
-            language_filter="python"
+            "user", n_results=10, language_filter="python"
         )
 
         assert len(results) > 0
-        assert all(r.metadata['language'] == "python" for r in results)
+        assert all(r.metadata["language"] == "python" for r in results)
 
     def test_find_by_symbol(self, embedding_store, sample_chunks):
         """Test finding code by exact symbol name"""
@@ -161,10 +157,7 @@ class TestEmbeddingStore:
         """Test finding symbol with repository filter"""
         embedding_store.add_chunks(sample_chunks)
 
-        results = embedding_store.find_by_symbol(
-            "login",
-            repo_filter=["other-repo"]
-        )
+        results = embedding_store.find_by_symbol("login", repo_filter=["other-repo"])
 
         assert len(results) == 1
         assert results[0].repo_name == "other-repo"
@@ -174,9 +167,7 @@ class TestEmbeddingStore:
         embedding_store.add_chunks(sample_chunks)
 
         results = embedding_store.find_related_by_file(
-            file_path="auth.py",
-            repo_name="test-repo",
-            n_results=5
+            file_path="auth.py", repo_name="test-repo", n_results=5
         )
 
         # Should find related code, excluding the same file
@@ -198,19 +189,19 @@ class TestEmbeddingStore:
 
         stats = embedding_store.get_repo_stats("test-repo")
 
-        assert stats['repo_name'] == "test-repo"
-        assert stats['chunk_count'] == 2
-        assert "auth.py" in stats['files']
-        assert "user.py" in stats['files']
-        assert "python" in stats['languages']
+        assert stats["repo_name"] == "test-repo"
+        assert stats["chunk_count"] == 2
+        assert "auth.py" in stats["files"]
+        assert "user.py" in stats["files"]
+        assert "python" in stats["languages"]
 
     def test_get_repo_stats_nonexistent(self, embedding_store):
         """Test getting stats for nonexistent repo"""
         stats = embedding_store.get_repo_stats("nonexistent-repo")
 
-        assert stats['repo_name'] == "nonexistent-repo"
-        assert stats['chunk_count'] == 0
-        assert len(stats['files']) == 0
+        assert stats["repo_name"] == "nonexistent-repo"
+        assert stats["chunk_count"] == 0
+        assert len(stats["files"]) == 0
 
     def test_delete_repo(self, embedding_store, sample_chunks):
         """Test deleting a repository"""
@@ -222,8 +213,8 @@ class TestEmbeddingStore:
 
         # Verify only other-repo remains
         remaining = embedding_store.collection.get()
-        assert len(remaining['ids']) == 1
-        assert remaining['metadatas'][0]['repo_name'] == "other-repo"
+        assert len(remaining["ids"]) == 1
+        assert remaining["metadatas"][0]["repo_name"] == "other-repo"
 
     def test_delete_nonexistent_repo(self, embedding_store):
         """Test deleting nonexistent repository"""
@@ -236,14 +227,14 @@ class TestEmbeddingStore:
 
         # Verify chunks exist
         results = embedding_store.collection.get()
-        assert len(results['ids']) == 3
+        assert len(results["ids"]) == 3
 
         # Reset
         embedding_store.reset()
 
         # Verify collection is empty
         results = embedding_store.collection.get()
-        assert len(results['ids']) == 0
+        assert len(results["ids"]) == 0
 
     def test_search_result_attributes(self, embedding_store, sample_chunks):
         """Test SearchResult has all required attributes"""
@@ -253,34 +244,28 @@ class TestEmbeddingStore:
 
         if results:
             result = results[0]
-            assert hasattr(result, 'chunk_id')
-            assert hasattr(result, 'file_path')
-            assert hasattr(result, 'repo_name')
-            assert hasattr(result, 'symbol_name')
-            assert hasattr(result, 'code_text')
-            assert hasattr(result, 'score')
-            assert hasattr(result, 'metadata')
+            assert hasattr(result, "chunk_id")
+            assert hasattr(result, "file_path")
+            assert hasattr(result, "repo_name")
+            assert hasattr(result, "symbol_name")
+            assert hasattr(result, "code_text")
+            assert hasattr(result, "score")
+            assert hasattr(result, "metadata")
 
     def test_persistence(self, temp_db_path, sample_chunks):
         """Test that data persists across store instances"""
         # Create store and add chunks
-        store1 = EmbeddingStore(
-            db_path=temp_db_path,
-            collection_name="persist_test"
-        )
+        store1 = EmbeddingStore(db_path=temp_db_path, collection_name="persist_test")
         store1.add_chunks(sample_chunks)
 
         # Close and recreate store
         del store1
 
-        store2 = EmbeddingStore(
-            db_path=temp_db_path,
-            collection_name="persist_test"
-        )
+        store2 = EmbeddingStore(db_path=temp_db_path, collection_name="persist_test")
 
         # Data should still be there
         results = store2.collection.get()
-        assert len(results['ids']) == 3
+        assert len(results["ids"]) == 3
 
         # Cleanup
         store2.reset()

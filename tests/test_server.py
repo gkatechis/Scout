@@ -1,8 +1,10 @@
 """
 Tests for the MCP server skeleton
 """
+
 import pytest
-from mcpindexer.server import app, list_tools, call_tool
+
+from mcpindexer.server import app, call_tool, list_tools
 
 
 @pytest.mark.asyncio
@@ -33,7 +35,7 @@ async def test_list_tools():
         "get_cross_repo_dependencies",
         "suggest_missing_repos",
         "get_stack_status",
-        "answer_question"
+        "answer_question",
     ]
 
     for expected_tool in expected_tools:
@@ -182,7 +184,10 @@ async def test_call_answer_question():
     assert len(result) == 1
     assert result[0].type == "text"
     # Should return either results or "No relevant code found"
-    assert "authentication" in result[0].text.lower() or "no relevant code" in result[0].text.lower()
+    assert (
+        "authentication" in result[0].text.lower()
+        or "no relevant code" in result[0].text.lower()
+    )
 
 
 @pytest.mark.asyncio
@@ -208,10 +213,9 @@ async def test_answer_question_output_format():
 @pytest.mark.asyncio
 async def test_answer_question_with_context_limit():
     """Test answer_question respects context_limit parameter"""
-    result = await call_tool("answer_question", {
-        "question": "authentication",
-        "context_limit": 3
-    })
+    result = await call_tool(
+        "answer_question", {"question": "authentication", "context_limit": 3}
+    )
 
     assert len(result) == 1
     assert result[0].type == "text"
@@ -222,10 +226,9 @@ async def test_answer_question_with_context_limit():
 @pytest.mark.asyncio
 async def test_answer_question_with_repos_filter():
     """Test answer_question with repos filter"""
-    result = await call_tool("answer_question", {
-        "question": "authentication",
-        "repos": ["test-repo"]
-    })
+    result = await call_tool(
+        "answer_question", {"question": "authentication", "repos": ["test-repo"]}
+    )
 
     assert len(result) == 1
     assert result[0].type == "text"
@@ -260,7 +263,10 @@ async def test_answer_question_vs_semantic_search_format():
 
     # answer_question should include analysis prompt
     if "No relevant code" not in answer_result[0].text:
-        assert "Analyze" in answer_result[0].text or "answer" in answer_result[0].text.lower()
+        assert (
+            "Analyze" in answer_result[0].text
+            or "answer" in answer_result[0].text.lower()
+        )
 
 
 @pytest.mark.asyncio
@@ -274,7 +280,12 @@ async def test_answer_question_includes_file_paths():
     # If we found results, verify file paths are included
     if "No relevant code" not in output and "Found" in output:
         # Should have file path format (something.py:number or Relevant files:)
-        has_file_ref = ".py:" in output or ".ts:" in output or ".js:" in output or "Relevant files:" in output
+        has_file_ref = (
+            ".py:" in output
+            or ".ts:" in output
+            or ".js:" in output
+            or "Relevant files:" in output
+        )
         # If no actual results, that's okay - the format is correct
         assert has_file_ref or "No relevant" in output
 

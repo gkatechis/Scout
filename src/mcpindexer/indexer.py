@@ -4,21 +4,25 @@ Main indexer orchestration
 Coordinates parsing, chunking, embedding, and storage
 Tracks git state for incremental updates
 """
-from pathlib import Path
-from typing import List, Optional, Dict, Set
+
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, List, Optional, Set
+
 import git
-from mcpindexer.parser import CodeParser
-from mcpindexer.chunker import CodeChunker, CodeChunk
-from mcpindexer.embeddings import EmbeddingStore
-from mcpindexer.dependency_analyzer import DependencyAnalyzer, CrossRepoAnalyzer
-from mcpindexer.stack_config import StackConfig, IndexingStatus
+
+from mcpindexer.chunker import CodeChunk, CodeChunker
+from mcpindexer.dependency_analyzer import CrossRepoAnalyzer, DependencyAnalyzer
 from mcpindexer.dependency_storage import DependencyStorage
+from mcpindexer.embeddings import EmbeddingStore
+from mcpindexer.parser import CodeParser
+from mcpindexer.stack_config import IndexingStatus, StackConfig
 
 
 @dataclass
 class IndexingResult:
     """Result of indexing operation"""
+
     repo_name: str
     files_processed: int
     files_skipped: int
@@ -36,15 +40,19 @@ class RepoIndexer:
     parse → chunk → analyze → embed → store
     """
 
-    SUPPORTED_EXTENSIONS = {'.py', '.js', '.mjs', '.cjs', '.ts', '.tsx', '.rb', '.go'}
-    SKIP_DIRECTORIES = {'node_modules', 'vendor', 'dist', 'build', '.git', '__pycache__', 'venv', 'env'}
+    SUPPORTED_EXTENSIONS = {".py", ".js", ".mjs", ".cjs", ".ts", ".tsx", ".rb", ".go"}
+    SKIP_DIRECTORIES = {
+        "node_modules",
+        "vendor",
+        "dist",
+        "build",
+        ".git",
+        "__pycache__",
+        "venv",
+        "env",
+    }
 
-    def __init__(
-        self,
-        repo_path: str,
-        repo_name: str,
-        embedding_store: EmbeddingStore
-    ):
+    def __init__(self, repo_path: str, repo_name: str, embedding_store: EmbeddingStore):
         """
         Initialize repository indexer
 
@@ -73,7 +81,7 @@ class RepoIndexer:
         self,
         file_filter: Optional[callable] = None,
         progress_callback: Optional[callable] = None,
-        batch_size: int = 1000
+        batch_size: int = 1000,
     ) -> IndexingResult:
         """
         Index the entire repository
@@ -152,7 +160,7 @@ class RepoIndexer:
             chunks_created=total_chunks_created,
             chunks_indexed=chunks_indexed,
             git_commit=git_commit,
-            errors=errors
+            errors=errors,
         )
 
     def index_file(self, file_path: str) -> List[CodeChunk]:
@@ -176,9 +184,7 @@ class RepoIndexer:
         return chunks
 
     def reindex(
-        self,
-        force: bool = False,
-        progress_callback: Optional[callable] = None
+        self, force: bool = False, progress_callback: Optional[callable] = None
     ) -> IndexingResult:
         """
         Reindex the repository
@@ -221,10 +227,10 @@ class RepoIndexer:
             "repo_path": str(self.repo_path),
             "git_commit": git_commit,
             "git_branch": git_branch,
-            "chunks_indexed": repo_stats['chunk_count'],
-            "files_indexed": len(repo_stats['files']),
-            "languages": repo_stats['languages'],
-            "dependencies": dep_stats
+            "chunks_indexed": repo_stats["chunk_count"],
+            "files_indexed": len(repo_stats["files"]),
+            "languages": repo_stats["languages"],
+            "dependencies": dep_stats,
         }
 
     def _scan_repo(self):
@@ -234,7 +240,7 @@ class RepoIndexer:
         Yields:
             Path objects for supported code files
         """
-        for file_path in self.repo_path.rglob('*'):
+        for file_path in self.repo_path.rglob("*"):
             # Skip if not a file
             if not file_path.is_file():
                 continue
@@ -307,7 +313,9 @@ class MultiRepoIndexer:
     Manages indexing across multiple repositories
     """
 
-    def __init__(self, embedding_store: EmbeddingStore, config_path: Optional[str] = None):
+    def __init__(
+        self, embedding_store: EmbeddingStore, config_path: Optional[str] = None
+    ):
         """
         Initialize multi-repo indexer
 
@@ -322,10 +330,7 @@ class MultiRepoIndexer:
         self.dependency_storage = DependencyStorage()
 
     def add_repo(
-        self,
-        repo_path: str,
-        repo_name: str,
-        auto_index: bool = True
+        self, repo_path: str, repo_name: str, auto_index: bool = True
     ) -> IndexingResult:
         """
         Add a repository to the stack
@@ -344,7 +349,7 @@ class MultiRepoIndexer:
         indexer = RepoIndexer(
             repo_path=repo_path,
             repo_name=repo_name,
-            embedding_store=self.embedding_store
+            embedding_store=self.embedding_store,
         )
 
         self.repo_indexers[repo_name] = indexer
@@ -362,14 +367,13 @@ class MultiRepoIndexer:
                 # Analyze and save dependencies
                 dep_graph = indexer.dependency_analyzer.analyze()
                 cross_deps = self._find_cross_repo_deps_for_repo(
-                    repo_name,
-                    dep_graph.external_packages
+                    repo_name, dep_graph.external_packages
                 )
                 self.dependency_storage.save_repo_dependencies(
                     repo_name=repo_name,
                     internal_deps=dep_graph.internal_deps,
                     external_packages=list(dep_graph.external_packages),
-                    cross_repo_deps=cross_deps
+                    cross_repo_deps=cross_deps,
                 )
 
                 # Update status to indexed
@@ -378,16 +382,14 @@ class MultiRepoIndexer:
                     IndexingStatus.INDEXED,
                     last_commit=result.git_commit,
                     files_indexed=result.files_processed,
-                    chunks_indexed=result.chunks_indexed
+                    chunks_indexed=result.chunks_indexed,
                 )
 
                 return result
             except Exception as e:
                 # Update status to error
                 self.stack_config.update_repo_status(
-                    repo_name,
-                    IndexingStatus.ERROR,
-                    error_message=str(e)
+                    repo_name, IndexingStatus.ERROR, error_message=str(e)
                 )
                 raise
         else:
@@ -398,7 +400,7 @@ class MultiRepoIndexer:
                 chunks_created=0,
                 chunks_indexed=0,
                 git_commit=None,
-                errors=[]
+                errors=[],
             )
 
     def remove_repo(self, repo_name: str) -> int:
@@ -480,9 +482,7 @@ class MultiRepoIndexer:
         return self.dependency_storage.suggest_missing_repos(indexed_repos)
 
     def _find_cross_repo_deps_for_repo(
-        self,
-        repo_name: str,
-        external_packages: Set[str]
+        self, repo_name: str, external_packages: Set[str]
     ) -> List[Dict[str, str]]:
         """
         Find cross-repository dependencies for a single repo
@@ -500,12 +500,16 @@ class MultiRepoIndexer:
         for package in external_packages:
             # Check if package matches any other indexed repo
             for other_repo in all_repos:
-                if other_repo != repo_name and self._package_matches_repo(package, other_repo):
-                    cross_deps.append({
-                        "source_repo": repo_name,
-                        "target_repo": other_repo,
-                        "package": package
-                    })
+                if other_repo != repo_name and self._package_matches_repo(
+                    package, other_repo
+                ):
+                    cross_deps.append(
+                        {
+                            "source_repo": repo_name,
+                            "target_repo": other_repo,
+                            "package": package,
+                        }
+                    )
 
         return cross_deps
 
@@ -521,8 +525,10 @@ class MultiRepoIndexer:
             True if they match
         """
         # Normalize names by removing common prefixes and special characters
-        package_lower = package.lower().replace('@', '').replace('/', '').replace('_', '-')
-        repo_lower = repo_name.lower().replace('_', '-')
+        package_lower = (
+            package.lower().replace("@", "").replace("/", "").replace("_", "-")
+        )
+        repo_lower = repo_name.lower().replace("_", "-")
 
         # Check for matches
         return package_lower in repo_lower or repo_lower in package_lower

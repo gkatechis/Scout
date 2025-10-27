@@ -1,18 +1,19 @@
 """
 Tests for dependency analyzer
 """
+
 import pytest
+
 from mcpindexer.dependency_analyzer import (
-    DependencyAnalyzer,
     CrossRepoAnalyzer,
     Dependency,
-    DependencyGraph
+    DependencyAnalyzer,
+    DependencyGraph,
 )
 from mcpindexer.parser import CodeParser
 
-
 # Sample code files for testing
-SAMPLE_AUTH_CODE = '''
+SAMPLE_AUTH_CODE = """
 import bcrypt
 from typing import Optional
 from .database import get_user
@@ -21,26 +22,26 @@ from .models.user import User
 def authenticate(username: str, password: str) -> Optional[User]:
     user = get_user(username)
     return user if bcrypt.checkpw(password, user.password) else None
-'''
+"""
 
-SAMPLE_DATABASE_CODE = '''
+SAMPLE_DATABASE_CODE = """
 from sqlalchemy import create_engine
 from .models.user import User
 
 def get_user(username: str):
     return User.query.filter_by(username=username).first()
-'''
+"""
 
-SAMPLE_USER_MODEL_CODE = '''
+SAMPLE_USER_MODEL_CODE = """
 from dataclasses import dataclass
 
 @dataclass
 class User:
     username: str
     password: str
-'''
+"""
 
-SAMPLE_JS_CODE = '''
+SAMPLE_JS_CODE = """
 const express = require('express');
 const { authenticate } = require('./auth');
 const User = require('./models/user');
@@ -49,7 +50,7 @@ function login(req, res) {
     const result = authenticate(req.body.username, req.body.password);
     res.json(result);
 }
-'''
+"""
 
 
 class TestDependencyAnalyzer:
@@ -183,7 +184,10 @@ class TestDependencyAnalyzer:
         assert self.analyzer._extract_package_name("lodash/map") == "lodash"
 
         # Scoped package with path
-        assert self.analyzer._extract_package_name("@company/auth/lib/utils") == "@company/auth"
+        assert (
+            self.analyzer._extract_package_name("@company/auth/lib/utils")
+            == "@company/auth"
+        )
 
     def test_dependency_object_attributes(self):
         """Test Dependency object has required attributes"""
@@ -194,11 +198,11 @@ class TestDependencyAnalyzer:
 
         if graph.dependencies:
             dep = graph.dependencies[0]
-            assert hasattr(dep, 'source_file')
-            assert hasattr(dep, 'target_module')
-            assert hasattr(dep, 'is_external')
-            assert hasattr(dep, 'import_type')
-            assert hasattr(dep, 'symbols')
+            assert hasattr(dep, "source_file")
+            assert hasattr(dep, "target_module")
+            assert hasattr(dep, "is_external")
+            assert hasattr(dep, "import_type")
+            assert hasattr(dep, "symbols")
 
 
 class TestCrossRepoAnalyzer:
@@ -236,10 +240,10 @@ class TestCrossRepoAnalyzer:
         # Create analyzer with scoped packages
         analyzer = DependencyAnalyzer(repo_name="app")
 
-        code_with_scoped = '''
+        code_with_scoped = """
 import { auth } from '@company/auth-service';
 import { db } from '@company/database';
-'''
+"""
         parsed = self.parser.parse_file("app.js", code_with_scoped)
         analyzer.add_file(parsed)
 

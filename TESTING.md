@@ -94,14 +94,16 @@ Before releasing to GitHub, verify:
 Run the test suite:
 
 ```bash
-# All tests
-python3 -m pytest tests/ -v
+# After setup.sh or pip install -e ., simply run:
+pytest tests/ -v
+
+# No PYTHONPATH export needed! pytest is configured in pyproject.toml
 
 # With coverage
-python3 -m pytest tests/ --cov=mcpindexer --cov-report=html
+pytest tests/ --cov=mcpindexer --cov-report=html
 
 # Specific test file
-python3 -m pytest tests/test_embeddings.py -v
+pytest tests/test_embeddings.py -v
 ```
 
 ## Integration Tests
@@ -141,7 +143,7 @@ python3 examples/test_chunker.py
 
 ### 4. MCP Integration
 - [ ] MCP server starts without errors
-- [ ] All 12 tools are available
+- [ ] All 13 tools are available
 - [ ] Tools return proper results
 - [ ] Error messages are clear
 

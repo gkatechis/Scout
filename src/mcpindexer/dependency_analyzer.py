@@ -3,15 +3,18 @@ Dependency analysis for code repositories
 
 Analyzes imports and builds dependency graphs within and across repositories
 """
-from dataclasses import dataclass
-from typing import List, Dict, Set, Optional
+
 from collections import defaultdict
-from mcpindexer.parser import ParsedFile, ImportStatement
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Set
+
+from mcpindexer.parser import ImportStatement, ParsedFile
 
 
 @dataclass
 class Dependency:
     """Represents a dependency between files or modules"""
+
     source_file: str
     target_module: str
     is_external: bool
@@ -22,6 +25,7 @@ class Dependency:
 @dataclass
 class DependencyGraph:
     """Graph of dependencies for a repository or set of repositories"""
+
     dependencies: List[Dependency]
     internal_deps: Dict[str, List[str]]  # file -> list of files it depends on
     external_deps: Dict[str, Set[str]]  # file -> set of external packages
@@ -82,7 +86,7 @@ class DependencyAnalyzer:
                     target_module=imp.module,
                     is_external=imp.is_external,
                     import_type=self._detect_import_type(parsed_file.language.value),
-                    symbols=imp.symbols
+                    symbols=imp.symbols,
                 )
                 all_dependencies.append(dep)
 
@@ -94,9 +98,7 @@ class DependencyAnalyzer:
                 else:
                     # Internal dependency
                     resolved_path = self._resolve_internal_import(
-                        file_path,
-                        imp.module,
-                        parsed_file.language.value
+                        file_path, imp.module, parsed_file.language.value
                     )
                     if resolved_path:
                         internal_deps[file_path].append(resolved_path)
@@ -105,7 +107,7 @@ class DependencyAnalyzer:
             dependencies=all_dependencies,
             internal_deps=dict(internal_deps),
             external_deps=dict(external_deps),
-            external_packages=external_packages
+            external_packages=external_packages,
         )
 
     def find_external_calls(self, target_package: str) -> List[Dependency]:
@@ -120,7 +122,8 @@ class DependencyAnalyzer:
         """
         graph = self.analyze()
         return [
-            dep for dep in graph.dependencies
+            dep
+            for dep in graph.dependencies
             if dep.is_external and target_package in dep.target_module
         ]
 
@@ -178,11 +181,9 @@ class DependencyAnalyzer:
             for dep in deps_list:
                 dep_counts[dep] += 1
 
-        most_dependent = sorted(
-            dep_counts.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )[:5]
+        most_dependent = sorted(dep_counts.items(), key=lambda x: x[1], reverse=True)[
+            :5
+        ]
 
         return {
             "total_files": total_files,
@@ -193,7 +194,7 @@ class DependencyAnalyzer:
             "top_external_packages": list(graph.external_packages)[:10],
             "most_dependent_files": [
                 {"file": f, "dependent_count": c} for f, c in most_dependent
-            ]
+            ],
         }
 
     def _detect_import_type(self, language: str) -> str:
@@ -203,7 +204,7 @@ class DependencyAnalyzer:
             "javascript": "require/import",
             "typescript": "import",
             "ruby": "require",
-            "go": "import"
+            "go": "import",
         }
         return type_map.get(language, "unknown")
 
@@ -216,21 +217,18 @@ class DependencyAnalyzer:
             'express' -> 'express'
             'lodash/map' -> 'lodash'
         """
-        if module.startswith('@'):
+        if module.startswith("@"):
             # Scoped package like @company/package
-            parts = module.split('/')
+            parts = module.split("/")
             if len(parts) >= 2:
                 return f"{parts[0]}/{parts[1]}"
             return module
         else:
             # Regular package
-            return module.split('/')[0]
+            return module.split("/")[0]
 
     def _resolve_internal_import(
-        self,
-        source_file: str,
-        import_path: str,
-        language: str
+        self, source_file: str, import_path: str, language: str
     ) -> Optional[str]:
         """
         Resolve an internal import to a file path
@@ -295,11 +293,13 @@ class CrossRepoAnalyzer:
                 # Check if package name matches another repo
                 for other_repo in self.repo_analyzers.keys():
                     if other_repo != repo_name and package in other_repo:
-                        cross_deps.append({
-                            "source_repo": repo_name,
-                            "target_repo": other_repo,
-                            "package": package
-                        })
+                        cross_deps.append(
+                            {
+                                "source_repo": repo_name,
+                                "target_repo": other_repo,
+                                "package": package,
+                            }
+                        )
 
         return cross_deps
 
@@ -324,7 +324,7 @@ class CrossRepoAnalyzer:
         suggestions = []
         for package in all_external_packages:
             # Check if it looks like an internal package
-            if package.startswith('@') and package not in indexed_repos:
+            if package.startswith("@") and package not in indexed_repos:
                 suggestions.append(package)
 
         return sorted(suggestions)

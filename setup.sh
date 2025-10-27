@@ -60,6 +60,19 @@ pip install -e "$SCRIPT_DIR"
 echo "✓ mcpindexer CLI installed"
 echo ""
 
+# Verify CLI installation
+echo "Verifying CLI installation..."
+if "$SCRIPT_DIR/venv/bin/python3" -m mcpindexer --help > /dev/null 2>&1; then
+    echo "✓ CLI verified - 'mcpindexer' command is available"
+    if "$SCRIPT_DIR/venv/bin/mcpindexer" --version > /dev/null 2>&1; then
+        echo "✓ Direct command works: mcpindexer --help"
+    fi
+else
+    echo "⚠ Warning: CLI verification failed"
+    echo "  Try: source venv/bin/activate && python3 -m mcpindexer --help"
+fi
+echo ""
+
 # Create .mcp.json if it doesn't exist
 if [ ! -f "$SCRIPT_DIR/.mcp.json" ]; then
     echo "Creating .mcp.json configuration..."
@@ -67,12 +80,11 @@ if [ ! -f "$SCRIPT_DIR/.mcp.json" ]; then
 {
   "mcpServers": {
     "mcpindexer": {
-      "command": "python3",
+      "command": "$SCRIPT_DIR/venv/bin/python3",
       "args": [
         "$SCRIPT_DIR/src/mcpindexer/server.py"
       ],
       "env": {
-        "PYTHONPATH": "$SCRIPT_DIR/src",
         "MCP_INDEXER_DB_PATH": "~/.mcpindexer/db"
       }
     }
@@ -103,21 +115,39 @@ fi
 
 if [ -n "$SHELL_CONFIG" ]; then
     echo "========================================"
-    echo "  Environment Variables"
+    echo "  Shell Integration (Optional)"
     echo "========================================"
     echo ""
-    echo "To use mcpIndexer from anywhere, add these lines to your $SHELL_CONFIG:"
+    echo "Would you like to add a shell alias for easy venv activation?"
+    echo "This will add 'mcpindexer-shell' command to $SHELL_CONFIG"
     echo ""
-    echo "  export PYTHONPATH=\"$SCRIPT_DIR/src:\$PYTHONPATH\""
-    echo "  export MCP_INDEXER_DB_PATH=~/.mcpindexer/db"
+    read -p "Add shell alias? (y/n) " -n 1 -r
     echo ""
-    echo "Or run this command to add them automatically:"
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        ALIAS_LINE="alias mcpindexer-shell='source $SCRIPT_DIR/venv/bin/activate'"
+
+        # Check if alias already exists
+        if grep -q "mcpindexer-shell" "$SHELL_CONFIG" 2>/dev/null; then
+            echo "⚠ Alias already exists in $SHELL_CONFIG"
+        else
+            echo "" >> "$SHELL_CONFIG"
+            echo "# mcpIndexer virtual environment activation" >> "$SHELL_CONFIG"
+            echo "$ALIAS_LINE" >> "$SHELL_CONFIG"
+            echo "✓ Added 'mcpindexer-shell' alias to $SHELL_CONFIG"
+            echo ""
+            echo "To use immediately, run: source $SHELL_CONFIG"
+            echo "Or restart your terminal"
+        fi
+    else
+        echo "Skipped shell alias setup"
+    fi
     echo ""
-    echo "  cat >> $SHELL_CONFIG << 'ENVEOF'"
-    echo "  # mcpIndexer"
-    echo "  export PYTHONPATH=\"$SCRIPT_DIR/src:\$PYTHONPATH\""
-    echo "  export MCP_INDEXER_DB_PATH=~/.mcpindexer/db"
-    echo "  ENVEOF"
+    echo "Environment variables are OPTIONAL for standard usage."
+    echo ""
+    echo "Set MCP_INDEXER_DB_PATH only if you want a custom database location:"
+    echo "  export MCP_INDEXER_DB_PATH=~/my-custom-path/db"
+    echo ""
+    echo "PYTHONPATH is NOT needed since pip install -e was used."
     echo ""
 fi
 
@@ -125,25 +155,54 @@ echo "========================================"
 echo "  Setup Complete!"
 echo "========================================"
 echo ""
+if grep -q "mcpindexer-shell" "$SHELL_CONFIG" 2>/dev/null; then
+    echo "To use mcpindexer, activate the virtual environment with:"
+    echo "  mcpindexer-shell"
+    echo ""
+    echo "Or manually:"
+    echo "  source $SCRIPT_DIR/venv/bin/activate"
+else
+    echo "To use mcpindexer, activate the virtual environment:"
+    echo "  source $SCRIPT_DIR/venv/bin/activate"
+fi
+echo ""
+echo "========================================"
+echo "  Verifying Installation"
+echo "========================================"
+echo ""
+echo "Running installation check..."
+echo ""
+
+# Run verification check
+if mcpindexer check; then
+    echo ""
+    echo "✓ Installation verified successfully!"
+else
+    echo ""
+    echo "⚠ Warning: Installation verification failed"
+    echo "You may need to troubleshoot before using mcpindexer"
+fi
+
+echo ""
 echo "Next steps:"
 echo ""
 echo "1. Try the demo:"
-echo "   source $SCRIPT_DIR/venv/bin/activate"
 echo "   python3 examples/demo.py"
 echo ""
-echo "2. Configure your MCP client (e.g., Claude Code):"
-echo "   Copy the .mcp.json configuration to your client's config directory"
+echo "2. Index your first repository:"
+echo "   mcpindexer add /path/to/your/repo --name repo-name"
 echo ""
-echo "3. Index your first repository:"
-echo "   python3 -c \""
-echo "   import os"
-echo "   from mcpindexer.indexer import MultiRepoIndexer"
-echo "   from mcpindexer.embeddings import EmbeddingStore"
-echo "   db_path = os.path.expanduser('~/.mcpindexer/db')"
-echo "   store = EmbeddingStore(db_path=db_path, collection_name='mcp_code_index')"
-echo "   indexer = MultiRepoIndexer(store)"
-echo "   indexer.add_repo('/path/to/your/repo', 'repo-name', auto_index=True)"
-echo "   \""
+echo "3. Check status:"
+echo "   mcpindexer status"
 echo ""
-echo "See README.md for more information."
+echo "4. Configure your MCP client (e.g., Claude Code):"
+echo "   A ready-to-use .mcp.json has been created at:"
+echo "   $SCRIPT_DIR/.mcp.json"
+echo ""
+echo "   For Claude Code, copy this configuration to:"
+echo "   ~/.claude/claude_desktop_config.json"
+echo ""
+echo "   Or merge the 'mcpindexer' server block into your existing config"
+echo ""
+echo "For detailed usage, see README.md"
 echo ""

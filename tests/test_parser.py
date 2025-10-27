@@ -1,12 +1,13 @@
 """
 Tests for the multi-language code parser
 """
+
 import pytest
+
 from mcpindexer.parser import CodeParser, LanguageType
 
-
 # Test code samples for each language
-PYTHON_CODE = '''
+PYTHON_CODE = """
 import os
 from typing import List, Optional
 from .local_module import helper
@@ -20,9 +21,9 @@ class UserManager:
 
 def authenticate_user(username: str) -> bool:
     return username in ["alice", "bob"]
-'''
+"""
 
-JAVASCRIPT_CODE = '''
+JAVASCRIPT_CODE = """
 import { createServer } from 'http';
 import express from 'express';
 import { helper } from './local';
@@ -40,9 +41,9 @@ class UserManager {
 function authenticateUser(username) {
     return ['alice', 'bob'].includes(username);
 }
-'''
+"""
 
-TYPESCRIPT_CODE = '''
+TYPESCRIPT_CODE = """
 import { Server } from 'http';
 import express from 'express';
 import { Helper } from './local';
@@ -58,9 +59,9 @@ class UserManager {
 function authenticateUser(username: string): boolean {
     return ['alice', 'bob'].includes(username);
 }
-'''
+"""
 
-RUBY_CODE = '''
+RUBY_CODE = """
 require 'json'
 require_relative 'local_helper'
 
@@ -77,9 +78,9 @@ end
 def authenticate_user(username)
   ['alice', 'bob'].include?(username)
 end
-'''
+"""
 
-GO_CODE = '''
+GO_CODE = """
 package main
 
 import (
@@ -98,7 +99,7 @@ func (um *UserManager) CreateUser(name string) {
 func AuthenticateUser(username string) bool {
     return username == "alice" || username == "bob"
 }
-'''
+"""
 
 
 class TestCodeParser:
@@ -155,7 +156,9 @@ class TestCodeParser:
         assert len(parsed.functions) >= 1
 
         # Find the authenticate_user function
-        auth_func = next((f for f in parsed.functions if "authenticate" in f.name.lower()), None)
+        auth_func = next(
+            (f for f in parsed.functions if "authenticate" in f.name.lower()), None
+        )
         assert auth_func is not None
         assert "authenticate_user" in auth_func.name
 
@@ -254,13 +257,13 @@ class TestCodeParser:
 
         if parsed.functions:
             func = parsed.functions[0]
-            assert hasattr(func, 'type')
-            assert hasattr(func, 'name')
-            assert hasattr(func, 'start_byte')
-            assert hasattr(func, 'end_byte')
-            assert hasattr(func, 'start_line')
-            assert hasattr(func, 'end_line')
-            assert hasattr(func, 'text')
+            assert hasattr(func, "type")
+            assert hasattr(func, "name")
+            assert hasattr(func, "start_byte")
+            assert hasattr(func, "end_byte")
+            assert hasattr(func, "start_line")
+            assert hasattr(func, "end_line")
+            assert hasattr(func, "text")
             assert func.start_line >= 0
             assert func.end_line >= func.start_line
 
@@ -270,10 +273,10 @@ class TestCodeParser:
 
         if parsed.imports:
             imp = parsed.imports[0]
-            assert hasattr(imp, 'module')
-            assert hasattr(imp, 'symbols')
-            assert hasattr(imp, 'start_line')
-            assert hasattr(imp, 'is_external')
+            assert hasattr(imp, "module")
+            assert hasattr(imp, "symbols")
+            assert hasattr(imp, "start_line")
+            assert hasattr(imp, "is_external")
             assert isinstance(imp.symbols, list)
             assert isinstance(imp.is_external, bool)
 
@@ -281,12 +284,12 @@ class TestCodeParser:
         """Test that ParsedFile has all required attributes"""
         parsed = self.parser.parse_file("test.py", PYTHON_CODE)
 
-        assert hasattr(parsed, 'file_path')
-        assert hasattr(parsed, 'language')
-        assert hasattr(parsed, 'functions')
-        assert hasattr(parsed, 'classes')
-        assert hasattr(parsed, 'imports')
-        assert hasattr(parsed, 'raw_code')
+        assert hasattr(parsed, "file_path")
+        assert hasattr(parsed, "language")
+        assert hasattr(parsed, "functions")
+        assert hasattr(parsed, "classes")
+        assert hasattr(parsed, "imports")
+        assert hasattr(parsed, "raw_code")
         assert parsed.raw_code == PYTHON_CODE
 
 

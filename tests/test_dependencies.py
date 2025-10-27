@@ -2,32 +2,34 @@
 Test that all dependencies are installed and working correctly.
 Each test validates a specific dependency independently.
 """
+
 import pytest
 
 
 def test_tree_sitter_import():
     """Test tree-sitter can be imported"""
     import tree_sitter
+
     # Verify Parser class exists
-    assert hasattr(tree_sitter, 'Parser')
-    assert hasattr(tree_sitter, 'Language')
+    assert hasattr(tree_sitter, "Parser")
+    assert hasattr(tree_sitter, "Language")
 
 
 def test_tree_sitter_languages():
     """Test all language parsers are available"""
-    import tree_sitter_python
-    import tree_sitter_javascript
-    import tree_sitter_typescript
-    import tree_sitter_ruby
     import tree_sitter_go
+    import tree_sitter_javascript
+    import tree_sitter_python
+    import tree_sitter_ruby
+    import tree_sitter_typescript
 
     # Verify each language parser has a language function
-    assert hasattr(tree_sitter_python, 'language')
-    assert hasattr(tree_sitter_javascript, 'language')
-    assert hasattr(tree_sitter_typescript, 'language_typescript')
-    assert hasattr(tree_sitter_typescript, 'language_tsx')
-    assert hasattr(tree_sitter_ruby, 'language')
-    assert hasattr(tree_sitter_go, 'language')
+    assert hasattr(tree_sitter_python, "language")
+    assert hasattr(tree_sitter_javascript, "language")
+    assert hasattr(tree_sitter_typescript, "language_typescript")
+    assert hasattr(tree_sitter_typescript, "language_tsx")
+    assert hasattr(tree_sitter_ruby, "language")
+    assert hasattr(tree_sitter_go, "language")
 
 
 def test_chromadb_import():
@@ -57,8 +59,8 @@ def test_gitpython_import():
     import git
 
     # Test basic Git functionality
-    assert hasattr(git, 'Repo')
-    assert hasattr(git, 'Git')
+    assert hasattr(git, "Repo")
+    assert hasattr(git, "Git")
 
 
 def test_pydantic_import():
@@ -80,14 +82,14 @@ def test_mcp_import():
     import mcp
 
     # Verify core MCP components are available
-    assert hasattr(mcp, 'server')
-    assert hasattr(mcp, 'types')
+    assert hasattr(mcp, "server")
+    assert hasattr(mcp, "types")
 
 
 def test_tree_sitter_basic_parsing():
     """Test tree-sitter can actually parse code"""
-    from tree_sitter import Parser, Query, QueryCursor, Language
     import tree_sitter_python
+    from tree_sitter import Language, Parser, Query, QueryCursor
 
     # Create parser with Language wrapper
     parser = Parser(Language(tree_sitter_python.language()))
@@ -98,17 +100,19 @@ def test_tree_sitter_basic_parsing():
 
     assert tree is not None
     assert tree.root_node is not None
-    assert tree.root_node.type == 'module'
+    assert tree.root_node.type == "module"
 
     # Query for function definitions
-    query = Query(Language(tree_sitter_python.language()), "(function_definition) @func")
+    query = Query(
+        Language(tree_sitter_python.language()), "(function_definition) @func"
+    )
     cursor = QueryCursor(query)
     captures = cursor.captures(tree.root_node)
 
     assert captures is not None
-    assert 'func' in captures
-    assert len(captures['func']) == 1  # Should find one function
-    assert captures['func'][0].type == 'function_definition'
+    assert "func" in captures
+    assert len(captures["func"]) == 1  # Should find one function
+    assert captures["func"][0].type == "function_definition"
 
 
 def test_chromadb_embedding_storage():
@@ -126,20 +130,15 @@ def test_chromadb_embedding_storage():
     ]
 
     collection.add(
-        embeddings=embeddings,
-        documents=["doc1", "doc2"],
-        ids=["id1", "id2"]
+        embeddings=embeddings, documents=["doc1", "doc2"], ids=["id1", "id2"]
     )
 
     # Query the collection
-    results = collection.query(
-        query_embeddings=[[1.0, 2.0, 3.0]],
-        n_results=1
-    )
+    results = collection.query(query_embeddings=[[1.0, 2.0, 3.0]], n_results=1)
 
     assert results is not None
-    assert len(results['ids']) == 1
-    assert results['ids'][0][0] == "id1"
+    assert len(results["ids"]) == 1
+    assert results["ids"][0][0] == "id1"
 
 
 if __name__ == "__main__":

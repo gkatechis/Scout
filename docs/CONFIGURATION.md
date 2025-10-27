@@ -33,16 +33,19 @@ export MCP_INDEXER_DB_PATH=/shared/team/code_indexes
 
 ### PYTHONPATH
 
-Required for running mcpIndexer from source.
+**NOT required** if you used `pip install -e .` (recommended).
+
+**Only needed if**:
+- You did NOT use `pip install -e .`
+- You installed with `pip install -r requirements.txt` instead
 
 **Usage**:
 ```bash
 export PYTHONPATH=/absolute/path/to/mcpIndexer/src
 ```
 
-**Why it's needed**:
-- Allows Python to find the `mcpindexer` module
-- Required for running scripts and the MCP server
+**What it does**:
+- Allows Python to find the `mcpindexer` module when not installed as a package
 - Must point to the `src/` directory
 
 ## MCP Configuration
@@ -58,12 +61,11 @@ Used by MCP clients (like Claude Code) to connect to the mcpIndexer server.
 {
   "mcpServers": {
     "mcpindexer": {
-      "command": "python3",
+      "command": "/absolute/path/to/mcpIndexer/venv/bin/python3",
       "args": [
         "/absolute/path/to/mcpIndexer/src/mcpindexer/server.py"
       ],
       "env": {
-        "PYTHONPATH": "/absolute/path/to/mcpIndexer/src",
         "MCP_INDEXER_DB_PATH": "~/.mcpindexer/db"
       }
     }
@@ -72,10 +74,11 @@ Used by MCP clients (like Claude Code) to connect to the mcpIndexer server.
 ```
 
 **Configuration fields**:
-- `command`: Python interpreter to use
+- `command`: Python interpreter from virtual environment (recommended)
 - `args`: Path to the MCP server script
-- `env.PYTHONPATH`: Path to mcpIndexer src directory
 - `env.MCP_INDEXER_DB_PATH`: Database location
+
+**Note**: PYTHONPATH is not needed if you used `pip install -e .` during setup. If you used `pip install -r requirements.txt` instead, add `"PYTHONPATH": "/absolute/path/to/mcpIndexer/src"` to the `env` section.
 
 ## Stack Configuration
 

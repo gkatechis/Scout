@@ -4,17 +4,21 @@ Embedding generation and vector storage using ChromaDB
 Uses sentence-transformers for code-specific embeddings
 Stores in ChromaDB with metadata for filtering
 """
-from typing import List, Optional, Dict, Any
+
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
+
 import chromadb
 from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
+
 from mcpindexer.chunker import CodeChunk
 
 
 @dataclass
 class SearchResult:
     """Result from semantic search"""
+
     chunk_id: str
     file_path: str
     repo_name: str
@@ -37,7 +41,7 @@ class EmbeddingStore:
         self,
         db_path: str = "./chroma_data",
         collection_name: str = "code_embeddings",
-        model_name: Optional[str] = None
+        model_name: Optional[str] = None,
     ):
         """
         Initialize embedding store
@@ -54,10 +58,7 @@ class EmbeddingStore:
         # Initialize ChromaDB client
         self.client = chromadb.PersistentClient(
             path=db_path,
-            settings=Settings(
-                anonymized_telemetry=False,
-                allow_reset=True
-            )
+            settings=Settings(anonymized_telemetry=False, allow_reset=True),
         )
 
         # Load embedding model
@@ -70,7 +71,7 @@ class EmbeddingStore:
             # Collection doesn't exist, create it
             self.collection = self.client.create_collection(
                 name=collection_name,
-                metadata={"description": "Code embeddings for semantic search"}
+                metadata={"description": "Code embeddings for semantic search"},
             )
 
     def add_chunks(self, chunks: List[CodeChunk]) -> None:
@@ -85,7 +86,9 @@ class EmbeddingStore:
 
         # Prepare data for ChromaDB
         ids = [chunk.chunk_id for chunk in chunks]
-        documents = [chunk.context_text for chunk in chunks]  # Use context-enhanced text
+        documents = [
+            chunk.context_text for chunk in chunks
+        ]  # Use context-enhanced text
         metadatas = [
             {
                 "file_path": chunk.file_path,
@@ -104,17 +107,12 @@ class EmbeddingStore:
 
         # Generate embeddings
         embeddings = self.model.encode(
-            documents,
-            convert_to_numpy=True,
-            show_progress_bar=False
+            documents, convert_to_numpy=True, show_progress_bar=False
         ).tolist()
 
         # Add to collection
         self.collection.add(
-            ids=ids,
-            embeddings=embeddings,
-            documents=documents,
-            metadatas=metadatas
+            ids=ids, embeddings=embeddings, documents=documents, metadatas=metadatas
         )
 
     def semantic_search(
@@ -122,7 +120,7 @@ class EmbeddingStore:
         query: str,
         n_results: int = 10,
         repo_filter: Optional[List[str]] = None,
-        language_filter: Optional[str] = None
+        language_filter: Optional[str] = None,
     ) -> List[SearchResult]:
         """
         Perform semantic search on code
@@ -138,9 +136,7 @@ class EmbeddingStore:
         """
         # Generate query embedding
         query_embedding = self.model.encode(
-            [query],
-            convert_to_numpy=True,
-            show_progress_bar=False
+            [query], convert_to_numpy=True, show_progress_bar=False
         ).tolist()[0]
 
         # Build where filter
@@ -154,29 +150,29 @@ class EmbeddingStore:
         results = self.collection.query(
             query_embeddings=[query_embedding],
             n_results=n_results,
-            where=where_filter if where_filter else None
+            where=where_filter if where_filter else None,
         )
 
         # Format results
         search_results = []
-        for i in range(len(results['ids'][0])):
-            metadata = results['metadatas'][0][i]
-            search_results.append(SearchResult(
-                chunk_id=results['ids'][0][i],
-                file_path=metadata['file_path'],
-                repo_name=metadata['repo_name'],
-                symbol_name=metadata.get('symbol_name') or None,
-                code_text=results['documents'][0][i],
-                score=results['distances'][0][i] if 'distances' in results else 0.0,
-                metadata=metadata
-            ))
+        for i in range(len(results["ids"][0])):
+            metadata = results["metadatas"][0][i]
+            search_results.append(
+                SearchResult(
+                    chunk_id=results["ids"][0][i],
+                    file_path=metadata["file_path"],
+                    repo_name=metadata["repo_name"],
+                    symbol_name=metadata.get("symbol_name") or None,
+                    code_text=results["documents"][0][i],
+                    score=results["distances"][0][i] if "distances" in results else 0.0,
+                    metadata=metadata,
+                )
+            )
 
         return search_results
 
     def find_by_symbol(
-        self,
-        symbol_name: str,
-        repo_filter: Optional[List[str]] = None
+        self, symbol_name: str, repo_filter: Optional[List[str]] = None
     ) -> List[SearchResult]:
         """
         Find code by exact symbol name
@@ -193,38 +189,34 @@ class EmbeddingStore:
             where_filter = {
                 "$and": [
                     {"symbol_name": symbol_name},
-                    {"repo_name": {"$in": repo_filter}}
+                    {"repo_name": {"$in": repo_filter}},
                 ]
             }
         else:
             where_filter = {"symbol_name": symbol_name}
 
-        results = self.collection.get(
-            where=where_filter,
-            limit=100
-        )
+        results = self.collection.get(where=where_filter, limit=100)
 
         # Format results
         search_results = []
-        for i in range(len(results['ids'])):
-            metadata = results['metadatas'][i]
-            search_results.append(SearchResult(
-                chunk_id=results['ids'][i],
-                file_path=metadata['file_path'],
-                repo_name=metadata['repo_name'],
-                symbol_name=metadata.get('symbol_name') or None,
-                code_text=results['documents'][i],
-                score=1.0,  # Exact match
-                metadata=metadata
-            ))
+        for i in range(len(results["ids"])):
+            metadata = results["metadatas"][i]
+            search_results.append(
+                SearchResult(
+                    chunk_id=results["ids"][i],
+                    file_path=metadata["file_path"],
+                    repo_name=metadata["repo_name"],
+                    symbol_name=metadata.get("symbol_name") or None,
+                    code_text=results["documents"][i],
+                    score=1.0,  # Exact match
+                    metadata=metadata,
+                )
+            )
 
         return search_results
 
     def find_related_by_file(
-        self,
-        file_path: str,
-        repo_name: str,
-        n_results: int = 10
+        self, file_path: str, repo_name: str, n_results: int = 10
     ) -> List[SearchResult]:
         """
         Find code related to a given file (using vector similarity)
@@ -239,49 +231,46 @@ class EmbeddingStore:
         """
         # Get all chunks from the file
         file_chunks = self.collection.get(
-            where={
-                "$and": [
-                    {"file_path": file_path},
-                    {"repo_name": repo_name}
-                ]
-            }
+            where={"$and": [{"file_path": file_path}, {"repo_name": repo_name}]}
         )
 
-        if not file_chunks['ids']:
+        if not file_chunks["ids"]:
             return []
 
         # Use first chunk's embedding to find similar code
         # In production, might want to average embeddings or use other strategies
-        first_doc = file_chunks['documents'][0]
+        first_doc = file_chunks["documents"][0]
         embedding = self.model.encode(
-            [first_doc],
-            convert_to_numpy=True,
-            show_progress_bar=False
+            [first_doc], convert_to_numpy=True, show_progress_bar=False
         ).tolist()[0]
 
         # Find similar chunks (excluding same file)
         results = self.collection.query(
             query_embeddings=[embedding],
             n_results=n_results + 20,  # Get extra to filter out same file
-            where={
-                "repo_name": repo_name  # Same repo only for now
-            }
+            where={"repo_name": repo_name},  # Same repo only for now
         )
 
         # Filter out results from the same file
         search_results = []
-        for i in range(len(results['ids'][0])):
-            metadata = results['metadatas'][0][i]
-            if metadata['file_path'] != file_path:
-                search_results.append(SearchResult(
-                    chunk_id=results['ids'][0][i],
-                    file_path=metadata['file_path'],
-                    repo_name=metadata['repo_name'],
-                    symbol_name=metadata.get('symbol_name') or None,
-                    code_text=results['documents'][0][i],
-                    score=results['distances'][0][i] if 'distances' in results else 0.0,
-                    metadata=metadata
-                ))
+        for i in range(len(results["ids"][0])):
+            metadata = results["metadatas"][0][i]
+            if metadata["file_path"] != file_path:
+                search_results.append(
+                    SearchResult(
+                        chunk_id=results["ids"][0][i],
+                        file_path=metadata["file_path"],
+                        repo_name=metadata["repo_name"],
+                        symbol_name=metadata.get("symbol_name") or None,
+                        code_text=results["documents"][0][i],
+                        score=(
+                            results["distances"][0][i]
+                            if "distances" in results
+                            else 0.0
+                        ),
+                        metadata=metadata,
+                    )
+                )
 
                 if len(search_results) >= n_results:
                     break
@@ -296,38 +285,36 @@ class EmbeddingStore:
         results = self.collection.get(limit=10000)  # Adjust limit as needed
 
         repos = set()
-        for metadata in results['metadatas']:
-            repos.add(metadata['repo_name'])
+        for metadata in results["metadatas"]:
+            repos.add(metadata["repo_name"])
 
         return sorted(list(repos))
 
     def get_repo_stats(self, repo_name: str) -> Dict[str, Any]:
         """Get statistics for a repository"""
-        results = self.collection.get(
-            where={"repo_name": repo_name}
-        )
+        results = self.collection.get(where={"repo_name": repo_name})
 
-        if not results['ids']:
+        if not results["ids"]:
             return {
                 "repo_name": repo_name,
                 "chunk_count": 0,
                 "files": [],
-                "languages": []
+                "languages": [],
             }
 
         # Aggregate stats
         files = set()
         languages = set()
 
-        for metadata in results['metadatas']:
-            files.add(metadata['file_path'])
-            languages.add(metadata['language'])
+        for metadata in results["metadatas"]:
+            files.add(metadata["file_path"])
+            languages.add(metadata["language"])
 
         return {
             "repo_name": repo_name,
-            "chunk_count": len(results['ids']),
+            "chunk_count": len(results["ids"]),
             "files": sorted(list(files)),
-            "languages": sorted(list(languages))
+            "languages": sorted(list(languages)),
         }
 
     def delete_repo(self, repo_name: str) -> int:
@@ -341,13 +328,11 @@ class EmbeddingStore:
             Number of chunks deleted
         """
         # Get all IDs for the repo
-        results = self.collection.get(
-            where={"repo_name": repo_name}
-        )
+        results = self.collection.get(where={"repo_name": repo_name})
 
-        if results['ids']:
-            self.collection.delete(ids=results['ids'])
-            return len(results['ids'])
+        if results["ids"]:
+            self.collection.delete(ids=results["ids"])
+            return len(results["ids"])
 
         return 0
 
@@ -356,5 +341,5 @@ class EmbeddingStore:
         self.client.delete_collection(name=self.collection_name)
         self.collection = self.client.create_collection(
             name=self.collection_name,
-            metadata={"description": "Code embeddings for semantic search"}
+            metadata={"description": "Code embeddings for semantic search"},
         )

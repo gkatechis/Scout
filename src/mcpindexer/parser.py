@@ -4,20 +4,23 @@ Multi-language code parser using tree-sitter
 Supports: JavaScript, TypeScript, Python, Ruby, Go
 Extracts: Functions, classes, imports, method calls
 """
+
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Optional, List
-from tree_sitter import Language, Parser, Query, QueryCursor, Node
-import tree_sitter_python
-import tree_sitter_javascript
-import tree_sitter_typescript
-import tree_sitter_ruby
+from typing import List, Optional
+
 import tree_sitter_go
+import tree_sitter_javascript
+import tree_sitter_python
+import tree_sitter_ruby
+import tree_sitter_typescript
+from tree_sitter import Language, Node, Parser, Query, QueryCursor
 
 
 class LanguageType(Enum):
     """Supported programming languages"""
+
     PYTHON = "python"
     JAVASCRIPT = "javascript"
     TYPESCRIPT = "typescript"
@@ -29,6 +32,7 @@ class LanguageType(Enum):
 @dataclass
 class CodeSymbol:
     """Represents a code symbol (function, class, etc.)"""
+
     type: str  # function_definition, class_definition, etc.
     name: str
     start_byte: int
@@ -41,6 +45,7 @@ class CodeSymbol:
 @dataclass
 class ImportStatement:
     """Represents an import/require statement"""
+
     module: str
     symbols: List[str]  # imported symbols (empty for wildcard imports)
     start_line: int
@@ -50,6 +55,7 @@ class ImportStatement:
 @dataclass
 class ParsedFile:
     """Result of parsing a file"""
+
     file_path: str
     language: LanguageType
     functions: List[CodeSymbol]
@@ -65,8 +71,12 @@ class CodeParser:
         """Initialize parsers for all supported languages"""
         self.parsers = {
             LanguageType.PYTHON: Parser(Language(tree_sitter_python.language())),
-            LanguageType.JAVASCRIPT: Parser(Language(tree_sitter_javascript.language())),
-            LanguageType.TYPESCRIPT: Parser(Language(tree_sitter_typescript.language_typescript())),
+            LanguageType.JAVASCRIPT: Parser(
+                Language(tree_sitter_javascript.language())
+            ),
+            LanguageType.TYPESCRIPT: Parser(
+                Language(tree_sitter_typescript.language_typescript())
+            ),
             LanguageType.TSX: Parser(Language(tree_sitter_typescript.language_tsx())),
             LanguageType.RUBY: Parser(Language(tree_sitter_ruby.language())),
             LanguageType.GO: Parser(Language(tree_sitter_go.language())),
@@ -101,7 +111,7 @@ class CodeParser:
             LanguageType.RUBY: {
                 "functions": "(method name: (identifier) @func.name) @func.def",
                 "classes": "(class name: (constant) @class.name) @class.def",
-                "imports": "(call method: (identifier) @method (#match? @method \"^(require|require_relative|load)$\")) @import",
+                "imports": '(call method: (identifier) @method (#match? @method "^(require|require_relative|load)$")) @import',
             },
             LanguageType.GO: {
                 "functions": "(function_declaration name: (identifier) @func.name) @func.def",
@@ -128,7 +138,9 @@ class CodeParser:
 
         return mapping.get(extension)
 
-    def parse_file(self, file_path: str, code: Optional[str] = None) -> Optional[ParsedFile]:
+    def parse_file(
+        self, file_path: str, code: Optional[str] = None
+    ) -> Optional[ParsedFile]:
         """
         Parse a code file and extract symbols
 
@@ -145,12 +157,12 @@ class CodeParser:
 
         # Read code if not provided
         if code is None:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 code = f.read()
 
         # Parse the code
         parser = self.parsers[language]
-        tree = parser.parse(bytes(code, 'utf-8'))
+        tree = parser.parse(bytes(code, "utf-8"))
 
         # Extract symbols
         functions = self._extract_functions(tree, code, language)
@@ -163,14 +175,18 @@ class CodeParser:
             functions=functions,
             classes=classes,
             imports=imports,
-            raw_code=code
+            raw_code=code,
         )
 
-    def _extract_functions(self, tree, code: str, language: LanguageType) -> List[CodeSymbol]:
+    def _extract_functions(
+        self, tree, code: str, language: LanguageType
+    ) -> List[CodeSymbol]:
         """Extract function definitions"""
         return self._extract_symbols(tree, code, language, "functions", "func")
 
-    def _extract_classes(self, tree, code: str, language: LanguageType) -> List[CodeSymbol]:
+    def _extract_classes(
+        self, tree, code: str, language: LanguageType
+    ) -> List[CodeSymbol]:
         """Extract class definitions"""
         return self._extract_symbols(tree, code, language, "classes", "class")
 
@@ -180,7 +196,7 @@ class CodeParser:
         code: str,
         language: LanguageType,
         query_type: str,
-        capture_prefix: str
+        capture_prefix: str,
     ) -> List[CodeSymbol]:
         """Generic symbol extraction"""
         symbols = []
@@ -204,26 +220,34 @@ class CodeParser:
                     name = "unknown"
                     if name_key in captures:
                         for name_node in captures[name_key]:
-                            if def_node.start_byte <= name_node.start_byte <= def_node.end_byte:
-                                name = code[name_node.start_byte:name_node.end_byte]
+                            if (
+                                def_node.start_byte
+                                <= name_node.start_byte
+                                <= def_node.end_byte
+                            ):
+                                name = code[name_node.start_byte : name_node.end_byte]
                                 break
 
-                    symbols.append(CodeSymbol(
-                        type=def_node.type,
-                        name=name,
-                        start_byte=def_node.start_byte,
-                        end_byte=def_node.end_byte,
-                        start_line=def_node.start_point[0],
-                        end_line=def_node.end_point[0],
-                        text=code[def_node.start_byte:def_node.end_byte]
-                    ))
+                    symbols.append(
+                        CodeSymbol(
+                            type=def_node.type,
+                            name=name,
+                            start_byte=def_node.start_byte,
+                            end_byte=def_node.end_byte,
+                            start_line=def_node.start_point[0],
+                            end_line=def_node.end_point[0],
+                            text=code[def_node.start_byte : def_node.end_byte],
+                        )
+                    )
         except Exception as e:
             # Silently skip query errors for now
             pass
 
         return symbols
 
-    def _extract_imports(self, tree, code: str, language: LanguageType) -> List[ImportStatement]:
+    def _extract_imports(
+        self, tree, code: str, language: LanguageType
+    ) -> List[ImportStatement]:
         """Extract import statements"""
         imports = []
         query_pattern = self.queries[language].get("imports")
@@ -238,18 +262,19 @@ class CodeParser:
 
             if "import" in captures:
                 for import_node in captures["import"]:
-                    import_text = code[import_node.start_byte:import_node.end_byte]
+                    import_text = code[import_node.start_byte : import_node.end_byte]
                     module, symbols, is_external = self._parse_import_statement(
-                        import_text,
-                        language
+                        import_text, language
                     )
 
-                    imports.append(ImportStatement(
-                        module=module,
-                        symbols=symbols,
-                        start_line=import_node.start_point[0],
-                        is_external=is_external
-                    ))
+                    imports.append(
+                        ImportStatement(
+                            module=module,
+                            symbols=symbols,
+                            start_line=import_node.start_point[0],
+                            is_external=is_external,
+                        )
+                    )
         except Exception as e:
             # Silently skip query errors for now
             pass
@@ -257,9 +282,7 @@ class CodeParser:
         return imports
 
     def _parse_import_statement(
-        self,
-        import_text: str,
-        language: LanguageType
+        self, import_text: str, language: LanguageType
     ) -> tuple[str, List[str], bool]:
         """
         Parse import statement to extract module and symbols
@@ -274,7 +297,9 @@ class CodeParser:
         if language == LanguageType.PYTHON:
             # Examples: "import os", "from foo import bar", "from .local import x"
             if "from" in import_text:
-                parts = import_text.replace("from ", "").replace("import ", "|").split("|")
+                parts = (
+                    import_text.replace("from ", "").replace("import ", "|").split("|")
+                )
                 if len(parts) >= 2:
                     module = parts[0].strip()
                     symbols = [s.strip() for s in parts[1].split(",")]
@@ -283,7 +308,11 @@ class CodeParser:
 
             is_external = not module.startswith(".")
 
-        elif language in [LanguageType.JAVASCRIPT, LanguageType.TYPESCRIPT, LanguageType.TSX]:
+        elif language in [
+            LanguageType.JAVASCRIPT,
+            LanguageType.TYPESCRIPT,
+            LanguageType.TSX,
+        ]:
             # Examples: "import { x } from 'module'", "import x from 'module'"
             if "from" in import_text:
                 parts = import_text.split("from")
@@ -294,13 +323,19 @@ class CodeParser:
 
         elif language == LanguageType.RUBY:
             # Examples: "require 'module'", "require_relative 'local'"
-            module = import_text.replace("require", "").replace("require_relative", "").strip().strip("'\"")
+            module = (
+                import_text.replace("require", "")
+                .replace("require_relative", "")
+                .strip()
+                .strip("'\"")
+            )
             is_external = "require_relative" not in import_text
 
         elif language == LanguageType.GO:
             # Examples: "import \"fmt\"", "import ( \"os\" \"fmt\" )"
             # Simplified - just extract quoted strings
             import re
+
             matches = re.findall(r'"([^"]+)"', import_text)
             if matches:
                 module = matches[0]  # Take first import

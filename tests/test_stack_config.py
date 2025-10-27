@@ -1,12 +1,15 @@
 """
 Tests for stack configuration system
 """
-import pytest
-import tempfile
-import shutil
+
 import json
+import shutil
+import tempfile
 from pathlib import Path
-from mcpindexer.stack_config import StackConfig, RepoConfig, IndexingStatus
+
+import pytest
+
+from mcpindexer.stack_config import IndexingStatus, RepoConfig, StackConfig
 
 
 @pytest.fixture
@@ -48,7 +51,7 @@ class TestRepoConfig:
             "path": "/path/to/repo",
             "status": "indexed",
             "files_indexed": 100,
-            "chunks_indexed": 500
+            "chunks_indexed": 500,
         }
 
         repo = RepoConfig.from_dict(data)
@@ -113,7 +116,7 @@ class TestStackConfig:
             IndexingStatus.INDEXED,
             last_commit="abc123",
             files_indexed=100,
-            chunks_indexed=500
+            chunks_indexed=500,
         )
 
         repo = config.get_repo("test-repo")
@@ -184,9 +187,7 @@ class TestStackConfig:
 
         # Mark as indexed
         config.update_repo_status(
-            "test-repo",
-            IndexingStatus.INDEXED,
-            last_commit="abc123"
+            "test-repo", IndexingStatus.INDEXED, last_commit="abc123"
         )
 
         # Should not need reindex (same commit)
@@ -215,7 +216,9 @@ class TestStackConfig:
 
         config.add_repo("repo1", "/path/to/repo1")
         config.add_repo("repo2", "/path/to/repo2")
-        config.update_repo_status("repo1", IndexingStatus.INDEXED, files_indexed=100, chunks_indexed=500)
+        config.update_repo_status(
+            "repo1", IndexingStatus.INDEXED, files_indexed=100, chunks_indexed=500
+        )
 
         stats = config.get_stats()
 
@@ -260,7 +263,7 @@ class TestStackConfig:
         config.add_repo("test-repo", "/path/to/repo")
 
         # Read file directly
-        with open(config_path, 'r') as f:
+        with open(config_path, "r") as f:
             data = json.load(f)
 
         assert "version" in data

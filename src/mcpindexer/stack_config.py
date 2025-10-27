@@ -4,16 +4,18 @@ Stack configuration management
 Manages persistent configuration for repository collections,
 including repo paths, indexing status, and metadata.
 """
+
 import json
-from pathlib import Path
-from typing import Dict, List, Optional
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from enum import Enum
+from pathlib import Path
+from typing import Dict, List, Optional
 
 
 class IndexingStatus(Enum):
     """Status of repository indexing"""
+
     NOT_INDEXED = "not_indexed"
     INDEXING = "indexing"
     INDEXED = "indexed"
@@ -24,6 +26,7 @@ class IndexingStatus(Enum):
 @dataclass
 class RepoConfig:
     """Configuration for a single repository"""
+
     name: str
     path: str
     status: IndexingStatus = IndexingStatus.NOT_INDEXED
@@ -45,7 +48,7 @@ class RepoConfig:
             "files_indexed": self.files_indexed,
             "chunks_indexed": self.chunks_indexed,
             "error_message": self.error_message,
-            "auto_reindex": self.auto_reindex
+            "auto_reindex": self.auto_reindex,
         }
 
     @classmethod
@@ -60,7 +63,7 @@ class RepoConfig:
             files_indexed=data.get("files_indexed", 0),
             chunks_indexed=data.get("chunks_indexed", 0),
             error_message=data.get("error_message"),
-            auto_reindex=data.get("auto_reindex", True)
+            auto_reindex=data.get("auto_reindex", True),
         )
 
 
@@ -96,7 +99,7 @@ class StackConfig:
             return
 
         try:
-            with open(self.config_path, 'r') as f:
+            with open(self.config_path, "r") as f:
                 data = json.load(f)
 
             # Load repos
@@ -115,22 +118,14 @@ class StackConfig:
         # Convert to dict
         data = {
             "version": "1.0",
-            "repos": {
-                name: repo.to_dict()
-                for name, repo in self.repos.items()
-            }
+            "repos": {name: repo.to_dict() for name, repo in self.repos.items()},
         }
 
         # Save to file
-        with open(self.config_path, 'w') as f:
+        with open(self.config_path, "w") as f:
             json.dump(data, f, indent=2)
 
-    def add_repo(
-        self,
-        name: str,
-        path: str,
-        auto_reindex: bool = True
-    ) -> RepoConfig:
+    def add_repo(self, name: str, path: str, auto_reindex: bool = True) -> RepoConfig:
         """
         Add a repository to the stack
 
@@ -142,11 +137,7 @@ class StackConfig:
         Returns:
             RepoConfig object
         """
-        repo = RepoConfig(
-            name=name,
-            path=path,
-            auto_reindex=auto_reindex
-        )
+        repo = RepoConfig(name=name, path=path, auto_reindex=auto_reindex)
         self.repos[name] = repo
         self.save()
         return repo
@@ -174,7 +165,7 @@ class StackConfig:
         last_commit: Optional[str] = None,
         files_indexed: Optional[int] = None,
         chunks_indexed: Optional[int] = None,
-        error_message: Optional[str] = None
+        error_message: Optional[str] = None,
     ) -> None:
         """
         Update repository indexing status
@@ -215,8 +206,7 @@ class StackConfig:
         return self.repos.get(name)
 
     def list_repos(
-        self,
-        status_filter: Optional[IndexingStatus] = None
+        self, status_filter: Optional[IndexingStatus] = None
     ) -> List[RepoConfig]:
         """
         List all repositories
@@ -285,5 +275,5 @@ class StackConfig:
             "total_repos": total,
             "by_status": by_status,
             "total_files_indexed": total_files,
-            "total_chunks_indexed": total_chunks
+            "total_chunks_indexed": total_chunks,
         }

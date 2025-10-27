@@ -1,21 +1,22 @@
 """
 Tests for the code chunking strategy
 """
+
 import pytest
-from mcpindexer.chunker import CodeChunker, CodeChunk
+
+from mcpindexer.chunker import CodeChunk, CodeChunker
 from mcpindexer.parser import CodeParser
 
-
 # Test code samples
-SMALL_PYTHON_CODE = '''
+SMALL_PYTHON_CODE = """
 def hello():
     return "world"
 
 def goodbye():
     return "farewell"
-'''
+"""
 
-MEDIUM_PYTHON_CODE = '''
+MEDIUM_PYTHON_CODE = """
 class UserService:
     def __init__(self):
         self.users = []
@@ -27,7 +28,7 @@ class UserService:
 
     def get_user(self, user_id: int) -> dict:
         return self.users[user_id] if user_id < len(self.users) else None
-'''
+"""
 
 LARGE_PYTHON_CODE = '''
 class ComplexService:
@@ -104,7 +105,10 @@ class TestCodeChunker:
             chunk = chunks[0]
             assert "File: test.py" in chunk.context_text
             # Should contain either Function or Method
-            assert any(keyword in chunk.context_text for keyword in ["Function:", "Method:", "Class:"])
+            assert any(
+                keyword in chunk.context_text
+                for keyword in ["Function:", "Method:", "Class:"]
+            )
 
     def test_chunk_ids_are_unique(self):
         """Test that each chunk gets a unique ID"""
@@ -124,13 +128,13 @@ class TestCodeChunker:
 
     def test_chunk_imports_preserved(self):
         """Test that import information is preserved in chunks"""
-        code_with_imports = '''
+        code_with_imports = """
 import os
 from typing import List
 
 def process():
     return os.path.join("a", "b")
-'''
+"""
         parsed = self.parser.parse_file("test.py", code_with_imports)
         chunks = self.chunker.chunk_file(parsed)
 
@@ -154,7 +158,9 @@ def process():
         for chunk in chunks:
             # Most chunks should be under max (some might exceed if indivisible)
             if chunk.chunk_type != "file":
-                assert chunk.token_count <= self.chunker.TARGET_MAX_TOKENS * 1.5  # Allow some overflow
+                assert (
+                    chunk.token_count <= self.chunker.TARGET_MAX_TOKENS * 1.5
+                )  # Allow some overflow
 
     def test_empty_file_handling(self):
         """Test handling of empty or minimal files"""
@@ -181,7 +187,9 @@ def process():
         chunks = self.chunker.chunk_file(parsed)
 
         # Check if any method chunks have parent_class set
-        method_chunks = [c for c in chunks if c.chunk_type == "function" and c.parent_class]
+        method_chunks = [
+            c for c in chunks if c.chunk_type == "function" and c.parent_class
+        ]
         # Might be 0 if class is kept as one chunk
         if method_chunks:
             assert method_chunks[0].parent_class == "UserService"
@@ -201,7 +209,7 @@ def process():
 
     def test_chunk_with_javascript(self):
         """Test chunking JavaScript code"""
-        js_code = '''
+        js_code = """
 class UserService {
     constructor() {
         this.users = [];
@@ -211,7 +219,7 @@ class UserService {
         return { name, id: this.users.length };
     }
 }
-'''
+"""
         parsed = self.parser.parse_file("test.js", js_code)
         chunks = self.chunker.chunk_file(parsed)
 
@@ -225,19 +233,19 @@ class UserService {
 
         if chunks:
             chunk = chunks[0]
-            assert hasattr(chunk, 'chunk_id')
-            assert hasattr(chunk, 'file_path')
-            assert hasattr(chunk, 'repo_name')
-            assert hasattr(chunk, 'language')
-            assert hasattr(chunk, 'chunk_type')
-            assert hasattr(chunk, 'code_text')
-            assert hasattr(chunk, 'start_line')
-            assert hasattr(chunk, 'end_line')
-            assert hasattr(chunk, 'symbol_name')
-            assert hasattr(chunk, 'parent_class')
-            assert hasattr(chunk, 'imports')
-            assert hasattr(chunk, 'context_text')
-            assert hasattr(chunk, 'token_count')
+            assert hasattr(chunk, "chunk_id")
+            assert hasattr(chunk, "file_path")
+            assert hasattr(chunk, "repo_name")
+            assert hasattr(chunk, "language")
+            assert hasattr(chunk, "chunk_type")
+            assert hasattr(chunk, "code_text")
+            assert hasattr(chunk, "start_line")
+            assert hasattr(chunk, "end_line")
+            assert hasattr(chunk, "symbol_name")
+            assert hasattr(chunk, "parent_class")
+            assert hasattr(chunk, "imports")
+            assert hasattr(chunk, "context_text")
+            assert hasattr(chunk, "token_count")
 
 
 if __name__ == "__main__":

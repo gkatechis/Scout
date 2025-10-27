@@ -1,12 +1,15 @@
 """
 Tests for main repository indexer
 """
-import pytest
-import tempfile
+
 import shutil
+import tempfile
 from pathlib import Path
-from mcpindexer.indexer import RepoIndexer, MultiRepoIndexer, IndexingResult
+
+import pytest
+
 from mcpindexer.embeddings import EmbeddingStore
+from mcpindexer.indexer import IndexingResult, MultiRepoIndexer, RepoIndexer
 
 
 @pytest.fixture
@@ -17,24 +20,30 @@ def temp_repo():
     repo_path.mkdir()
 
     # Create some sample files
-    (repo_path / "auth.py").write_text('''
+    (repo_path / "auth.py").write_text(
+        """
 import bcrypt
 
 def authenticate(username, password):
     return bcrypt.checkpw(password, get_hash(username))
-''')
+"""
+    )
 
-    (repo_path / "user.py").write_text('''
+    (repo_path / "user.py").write_text(
+        """
 class User:
     def __init__(self, name):
         self.name = name
-''')
+"""
+    )
 
-    (repo_path / "api.js").write_text('''
+    (repo_path / "api.js").write_text(
+        """
 function login(req, res) {
     res.json({ success: true });
 }
-''')
+"""
+    )
 
     yield repo_path
 
@@ -66,7 +75,7 @@ class TestRepoIndexer:
         indexer = RepoIndexer(
             repo_path=str(temp_repo),
             repo_name="test-repo",
-            embedding_store=embedding_store
+            embedding_store=embedding_store,
         )
 
         assert indexer.repo_name == "test-repo"
@@ -79,7 +88,7 @@ class TestRepoIndexer:
         indexer = RepoIndexer(
             repo_path=str(temp_repo),
             repo_name="test-repo",
-            embedding_store=embedding_store
+            embedding_store=embedding_store,
         )
 
         result = indexer.index()
@@ -95,7 +104,7 @@ class TestRepoIndexer:
         indexer = RepoIndexer(
             repo_path=str(temp_repo),
             repo_name="test-repo",
-            embedding_store=embedding_store
+            embedding_store=embedding_store,
         )
 
         progress_calls = []
@@ -113,7 +122,7 @@ class TestRepoIndexer:
         indexer = RepoIndexer(
             repo_path=str(temp_repo),
             repo_name="test-repo",
-            embedding_store=embedding_store
+            embedding_store=embedding_store,
         )
 
         file_path = str(temp_repo / "auth.py")
@@ -126,7 +135,7 @@ class TestRepoIndexer:
         indexer = RepoIndexer(
             repo_path=str(temp_repo),
             repo_name="test-repo",
-            embedding_store=embedding_store
+            embedding_store=embedding_store,
         )
 
         # Index first
@@ -145,7 +154,7 @@ class TestRepoIndexer:
         indexer = RepoIndexer(
             repo_path=str(temp_repo),
             repo_name="test-repo",
-            embedding_store=embedding_store
+            embedding_store=embedding_store,
         )
 
         # Initial index
@@ -164,7 +173,7 @@ class TestRepoIndexer:
         indexer = RepoIndexer(
             repo_path=str(temp_repo),
             repo_name="test-repo",
-            embedding_store=embedding_store
+            embedding_store=embedding_store,
         )
 
         files = list(indexer._scan_repo())
@@ -174,20 +183,20 @@ class TestRepoIndexer:
 
         # Check extensions
         extensions = {f.suffix for f in files}
-        assert '.py' in extensions
-        assert '.js' in extensions
+        assert ".py" in extensions
+        assert ".js" in extensions
 
     def test_file_filtering(self, temp_repo, embedding_store):
         """Test indexing with file filter"""
         indexer = RepoIndexer(
             repo_path=str(temp_repo),
             repo_name="test-repo",
-            embedding_store=embedding_store
+            embedding_store=embedding_store,
         )
 
         # Only index Python files
         def python_only(path):
-            return path.suffix == '.py'
+            return path.suffix == ".py"
 
         result = indexer.index(file_filter=python_only)
 
@@ -199,18 +208,18 @@ class TestRepoIndexer:
         indexer = RepoIndexer(
             repo_path=str(temp_repo),
             repo_name="test-repo",
-            embedding_store=embedding_store
+            embedding_store=embedding_store,
         )
 
         result = indexer.index()
 
-        assert hasattr(result, 'repo_name')
-        assert hasattr(result, 'files_processed')
-        assert hasattr(result, 'files_skipped')
-        assert hasattr(result, 'chunks_created')
-        assert hasattr(result, 'chunks_indexed')
-        assert hasattr(result, 'git_commit')
-        assert hasattr(result, 'errors')
+        assert hasattr(result, "repo_name")
+        assert hasattr(result, "files_processed")
+        assert hasattr(result, "files_skipped")
+        assert hasattr(result, "chunks_created")
+        assert hasattr(result, "chunks_indexed")
+        assert hasattr(result, "git_commit")
+        assert hasattr(result, "errors")
 
 
 class TestMultiRepoIndexer:
@@ -227,9 +236,7 @@ class TestMultiRepoIndexer:
         indexer = MultiRepoIndexer(embedding_store=embedding_store)
 
         result = indexer.add_repo(
-            repo_path=str(temp_repo),
-            repo_name="test-repo",
-            auto_index=True
+            repo_path=str(temp_repo), repo_name="test-repo", auto_index=True
         )
 
         assert isinstance(result, IndexingResult)
@@ -241,9 +248,7 @@ class TestMultiRepoIndexer:
         indexer = MultiRepoIndexer(embedding_store=embedding_store)
 
         result = indexer.add_repo(
-            repo_path=str(temp_repo),
-            repo_name="test-repo",
-            auto_index=False
+            repo_path=str(temp_repo), repo_name="test-repo", auto_index=False
         )
 
         assert result.files_processed == 0
@@ -255,9 +260,7 @@ class TestMultiRepoIndexer:
 
         # Add repo
         indexer.add_repo(
-            repo_path=str(temp_repo),
-            repo_name="test-repo",
-            auto_index=True
+            repo_path=str(temp_repo), repo_name="test-repo", auto_index=True
         )
 
         # Remove it
@@ -271,9 +274,7 @@ class TestMultiRepoIndexer:
         indexer = MultiRepoIndexer(embedding_store=embedding_store)
 
         indexer.add_repo(
-            repo_path=str(temp_repo),
-            repo_name="test-repo",
-            auto_index=True
+            repo_path=str(temp_repo), repo_name="test-repo", auto_index=True
         )
 
         repos = indexer.list_repos()
@@ -285,9 +286,7 @@ class TestMultiRepoIndexer:
         indexer = MultiRepoIndexer(embedding_store=embedding_store)
 
         indexer.add_repo(
-            repo_path=str(temp_repo),
-            repo_name="test-repo",
-            auto_index=True
+            repo_path=str(temp_repo), repo_name="test-repo", auto_index=True
         )
 
         stats = indexer.get_repo_stats("test-repo")
