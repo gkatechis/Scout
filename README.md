@@ -28,9 +28,28 @@ MCP Indexer provides intelligent code search capabilities to any MCP-compatible 
 
 ### Prerequisites
 
-- Python 3.8 or higher
+**Python 3.8 or higher** - Check your version:
 
-- pip
+```bash
+python3 --version
+```
+
+If you need to install or upgrade Python:
+
+- **macOS**: `brew install python@3.11` or download from <https://python.org/downloads/>
+- **Ubuntu/Debian**: `sudo apt install python3.11 python3.11-venv`
+- **Windows**: Download from <https://python.org/downloads/>
+
+**Multiple Python versions?** If you have several versions installed, specify which one to use when creating the virtual environment:
+
+```bash
+# Use specific Python version for venv
+python3.11 -m venv venv
+# or
+python3.9 -m venv venv
+```
+
+**Why virtual environments?** They isolate dependencies per project, preventing conflicts between different Python projects on your system.
 
 ### Automated Setup (Recommended)
 
@@ -545,11 +564,52 @@ Based on testing with real-world repos:
 
 ## Troubleshooting
 
+### Issue: Python version conflicts or dependency errors
+
+**Symptoms**:
+
+- "ModuleNotFoundError" when running mcpindexer
+- "version conflict" errors during installation
+- Dependencies fail to install
+
+**Solutions**:
+
+1. **Verify you're using Python 3.8+**:
+
+   ```bash
+   python3 --version
+   ```
+
+2. **Create a fresh virtual environment with a specific Python version**:
+
+   ```bash
+   # Remove old venv if it exists
+   rm -rf venv
+
+   # Create new venv with specific Python version
+   python3.11 -m venv venv  # or python3.9, python3.10, etc.
+   source venv/bin/activate
+
+   # Upgrade pip first
+   pip install --upgrade pip setuptools wheel
+
+   # Install dependencies
+   pip install -e .
+   ```
+
+3. **Still having issues?** Install from requirements.txt first:
+
+   ```bash
+   pip install -r requirements.txt
+   pip install -e .
+   ```
+
 ### Issue: "ModuleNotFoundError: No module named 'tree_sitter'"
 
-**Solution**: Install dependencies
+**Solution**: Make sure virtual environment is activated and dependencies are installed
 
 ```bash
+source venv/bin/activate
 pip install -r requirements.txt
 
 ```
