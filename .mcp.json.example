@@ -6,7 +6,8 @@
         "/absolute/path/to/mcpIndexer/src/mcpindexer/server.py"
       ],
       "env": {
-        "MCP_INDEXER_DB_PATH": "~/.mcpindexer/db"
+        "MCP_INDEXER_DB_PATH": "~/.mcpindexer/db",
+        "MCP_INDEXER_MODEL": "sentence-transformers/multi-qa-mpnet-base-dot-v1"
       }
     }
   }
@@ -21,5 +22,10 @@
 //
 // To get your actual path, run:
 //   cd mcpIndexer && pwd
+//
+// Environment variables (optional):
+//   - MCP_INDEXER_DB_PATH: Database location (default: ~/.mcpindexer/db)
+//   - MCP_INDEXER_MODEL: Embedding model (default: multi-qa-mpnet-base-dot-v1)
+//     Alternative models: all-MiniLM-L6-v2 (good balance), all-mpnet-base-v2 (best quality)
 //
 // Note: PYTHONPATH is NOT included because pip install -e . makes it unnecessary

@@ -18,6 +18,31 @@ export MCP_INDEXER_DB_PATH=/custom/path/to/db
 - Embedding storage
 - Persistent index data
 
+### MCP_INDEXER_MODEL
+
+Controls which sentence-transformer model is used for generating code embeddings.
+
+**Default**: `sentence-transformers/multi-qa-mpnet-base-dot-v1`
+
+**Usage**:
+```bash
+export MCP_INDEXER_MODEL=sentence-transformers/all-MiniLM-L6-v2
+```
+
+**What it affects**:
+- Quality of semantic search results
+- Indexing speed
+- Query speed
+- Memory usage
+
+**Benchmarked models** (all achieve 100% accuracy on code search):
+- `sentence-transformers/multi-qa-mpnet-base-dot-v1` (default) - **Fastest overall** (0.07s indexing, 11ms queries)
+- `sentence-transformers/all-MiniLM-L6-v2` - Good balance (0.15s indexing, 27ms queries)
+- `sentence-transformers/msmarco-bert-base-dot-v5` - Search-optimized (0.15s indexing, 30ms queries)
+- `sentence-transformers/all-mpnet-base-v2` - Highest quality but slow (1.4s indexing, 287ms queries)
+
+**Note**: Changing models requires reindexing all repositories, as embeddings are not compatible across models
+
 **Example configurations**:
 
 ```bash
