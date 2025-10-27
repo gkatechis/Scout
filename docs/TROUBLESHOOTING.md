@@ -13,7 +13,7 @@ This guide covers common issues and their solutions when using MCP Indexer.
 
 **Solutions**:
 
-1. **Verify you're using Python 3.8+**:
+1. **Verify you're using Python 3.10+**:
    ```bash
    python3 --version
    ```
@@ -24,7 +24,7 @@ This guide covers common issues and their solutions when using MCP Indexer.
    rm -rf venv
 
    # Create new venv with specific Python version
-   python3.11 -m venv venv  # or python3.9, python3.10, etc.
+   python3.11 -m venv venv  # or python3.10, python3.12, etc.
    source venv/bin/activate
 
    # Upgrade pip first

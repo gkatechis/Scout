@@ -183,7 +183,7 @@ See [TESTING.md](TESTING.md) for detailed testing documentation.
 
 The project uses GitHub Actions for continuous integration. On every push and pull request:
 
-1. **Test Job**: Runs tests on Python 3.8, 3.9, 3.10, 3.11, and 3.12
+1. **Test Job**: Runs tests on Python 3.10, 3.11, and 3.12
 2. **Lint Job**: Checks code style with flake8, black, and isort
 
 You can view CI results in the "Actions" tab of the GitHub repository.

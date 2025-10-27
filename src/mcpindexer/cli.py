@@ -593,11 +593,11 @@ def cmd_check(args):
 
     # Check Python version
     py_version = sys.version_info
-    if py_version >= (3, 8):
+    if py_version >= (3, 10):
         print(f"✓ Python {py_version.major}.{py_version.minor}.{py_version.micro}")
     else:
         print(
-            f"✗ Python {py_version.major}.{py_version.minor}.{py_version.micro} (3.8+ required)"
+            f"✗ Python {py_version.major}.{py_version.minor}.{py_version.micro} (3.10+ required)"
         )
         all_ok = False
 

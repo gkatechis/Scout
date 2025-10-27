@@ -16,16 +16,16 @@ echo ""
 # Check Python version
 echo "Checking Python version..."
 if ! command -v python3 &> /dev/null; then
-    echo "ERROR: python3 not found. Please install Python 3.8 or higher."
+    echo "ERROR: python3 not found. Please install Python 3.10 or higher."
     exit 1
 fi
 
 PYTHON_VERSION=$(python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
 echo "Found Python $PYTHON_VERSION"
 
-# Check if version is >= 3.8
-if ! python3 -c 'import sys; exit(0 if sys.version_info >= (3, 8) else 1)' 2>/dev/null; then
-    echo "ERROR: Python 3.8 or higher required. Found $PYTHON_VERSION"
+# Check if version is >= 3.10
+if ! python3 -c 'import sys; exit(0 if sys.version_info >= (3, 10) else 1)' 2>/dev/null; then
+    echo "ERROR: Python 3.10 or higher required. Found $PYTHON_VERSION"
     exit 1
 fi
 echo "✓ Python version OK"

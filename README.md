@@ -41,7 +41,7 @@ MCP Indexer provides intelligent code search capabilities to any MCP-compatible 
 
 ### Prerequisites
 
-**Python 3.8 or higher** - Check your version:
+**Python 3.10 or higher** - Check your version:
 ```bash
 python3 --version
 ```

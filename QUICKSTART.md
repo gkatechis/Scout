@@ -101,7 +101,7 @@ This demonstrates the full indexing pipeline without requiring you to index your
 
 ### Installation fails
 
-- Ensure Python 3.8+ is installed: `python3 --version`
+- Ensure Python 3.10+ is installed: `python3 --version`
 
 - Check the [Installation section in README.md](README.md#installation)
 
