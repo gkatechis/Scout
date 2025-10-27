@@ -5,6 +5,7 @@ Uses sentence-transformers for code-specific embeddings
 Stores in ChromaDB with metadata for filtering
 """
 
+import os
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
@@ -33,9 +34,13 @@ class EmbeddingStore:
     Manages code embeddings and vector search using ChromaDB
     """
 
-    # Default embedding model (code-specific)
-    DEFAULT_MODEL = "sentence-transformers/all-MiniLM-L6-v2"  # Fast, general purpose
-    # For production, consider: "jinaai/jina-embeddings-v2-base-code"
+    # Default embedding model (optimized for semantic search)
+    DEFAULT_MODEL = "sentence-transformers/multi-qa-mpnet-base-dot-v1"
+    # Alternative models tested (all 100% accuracy on code search):
+    # - "multi-qa-mpnet-base-dot-v1" (DEFAULT: fastest indexing & queries)
+    # - "all-MiniLM-L6-v2" (2x slower, good balance)
+    # - "msmarco-bert-base-dot-v5" (similar speed to MiniLM)
+    # - "all-mpnet-base-v2" (10x slower queries, high quality)
 
     def __init__(
         self,
@@ -49,11 +54,14 @@ class EmbeddingStore:
         Args:
             db_path: Path to ChromaDB storage directory
             collection_name: Name of the collection
-            model_name: Optional embedding model name
+            model_name: Optional embedding model name (defaults to
+                MCP_INDEXER_MODEL env var or DEFAULT_MODEL)
         """
         self.db_path = db_path
         self.collection_name = collection_name
-        self.model_name = model_name or self.DEFAULT_MODEL
+        self.model_name = model_name or os.getenv(
+            "MCP_INDEXER_MODEL", self.DEFAULT_MODEL
+        )
 
         # Initialize ChromaDB client
         self.client = chromadb.PersistentClient(

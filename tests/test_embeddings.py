@@ -2,9 +2,9 @@
 Tests for embedding generation and vector storage
 """
 
+import os
 import shutil
 import tempfile
-from pathlib import Path
 
 import pytest
 
@@ -269,6 +269,56 @@ class TestEmbeddingStore:
 
         # Cleanup
         store2.reset()
+
+    def test_model_selection_env_var(self, temp_db_path):
+        """Test that MCP_INDEXER_MODEL environment variable is respected"""
+        # Set environment variable
+        os.environ["MCP_INDEXER_MODEL"] = "sentence-transformers/all-MiniLM-L6-v2"
+
+        try:
+            store = EmbeddingStore(db_path=temp_db_path, collection_name="model_test")
+            assert store.model_name == "sentence-transformers/all-MiniLM-L6-v2"
+
+            # Cleanup
+            store.reset()
+        finally:
+            # Clean up environment variable
+            if "MCP_INDEXER_MODEL" in os.environ:
+                del os.environ["MCP_INDEXER_MODEL"]
+
+    def test_model_selection_parameter_override(self, temp_db_path):
+        """Test that explicit model_name parameter overrides environment variable"""
+        os.environ["MCP_INDEXER_MODEL"] = "sentence-transformers/all-MiniLM-L6-v2"
+
+        try:
+            store = EmbeddingStore(
+                db_path=temp_db_path,
+                collection_name="override_test",
+                model_name="sentence-transformers/all-mpnet-base-v2",
+            )
+            # Parameter should override env var
+            assert store.model_name == "sentence-transformers/all-mpnet-base-v2"
+
+            # Cleanup
+            store.reset()
+        finally:
+            if "MCP_INDEXER_MODEL" in os.environ:
+                del os.environ["MCP_INDEXER_MODEL"]
+
+    def test_default_model_selection(self, temp_db_path):
+        """Test that default model is used when no override specified"""
+        # Clear env var if set
+        if "MCP_INDEXER_MODEL" in os.environ:
+            del os.environ["MCP_INDEXER_MODEL"]
+
+        store = EmbeddingStore(db_path=temp_db_path, collection_name="default_test")
+        # Should use the new default
+        assert (
+            store.model_name == "sentence-transformers/multi-qa-mpnet-base-dot-v1"
+        )
+
+        # Cleanup
+        store.reset()
 
 
 if __name__ == "__main__":
