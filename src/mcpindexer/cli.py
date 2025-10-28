@@ -152,8 +152,14 @@ def cmd_add(args):
     indexer = get_indexer()
 
     try:
-        logger.debug("Calling indexer.add_repo()")
-        indexer.add_repo(repo_path=str(repo_path), repo_name=name, auto_index=True)
+        worker_count = getattr(args, "workers", None)
+        logger.debug(f"Calling indexer.add_repo() with worker_count={worker_count}")
+        indexer.add_repo(
+            repo_path=str(repo_path),
+            repo_name=name,
+            auto_index=True,
+            worker_count=worker_count,
+        )
         logger.info(f"Indexing completed successfully for '{name}'")
 
         # Get stats from stack config
@@ -700,6 +706,12 @@ def main():
     )
     parser_add.add_argument(
         "--clone-dir", help="Directory to clone into (default: ~/Code)"
+    )
+    parser_add.add_argument(
+        "--workers",
+        type=int,
+        default=None,
+        help="Number of parallel workers for file processing (default: CPU count)",
     )
     parser_add.set_defaults(func=cmd_add)
 
