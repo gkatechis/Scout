@@ -3,6 +3,7 @@ Embedding generation and vector storage using ChromaDB
 
 Uses sentence-transformers for code-specific embeddings
 Stores in ChromaDB with metadata for filtering
+Supports hybrid search combining semantic and keyword matching
 """
 
 import os
@@ -14,6 +15,7 @@ from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
 
 from mcpindexer.chunker import CodeChunk
+from mcpindexer.keyword_search import KeywordSearchIndex
 
 
 @dataclass
@@ -82,9 +84,12 @@ class EmbeddingStore:
                 metadata={"description": "Code embeddings for semantic search"},
             )
 
+        # Initialize keyword search index for hybrid search
+        self.keyword_index = KeywordSearchIndex()
+
     def add_chunks(self, chunks: List[CodeChunk]) -> None:
         """
-        Add code chunks to the vector store
+        Add code chunks to the vector store and keyword index
 
         Args:
             chunks: List of CodeChunk objects to embed and store
@@ -122,6 +127,9 @@ class EmbeddingStore:
         self.collection.add(
             ids=ids, embeddings=embeddings, documents=documents, metadatas=metadatas
         )
+
+        # Also add to keyword search index for hybrid search
+        self.keyword_index.index_chunks(chunks)
 
     def semantic_search(
         self,
@@ -178,6 +186,159 @@ class EmbeddingStore:
             )
 
         return search_results
+
+    @staticmethod
+    def _reciprocal_rank_fusion(
+        ranked_lists: List[List[SearchResult]], k: int = 60
+    ) -> List[SearchResult]:
+        """
+        Combine multiple ranked lists using Reciprocal Rank Fusion (RRF)
+
+        Args:
+            ranked_lists: List of ranked result lists to merge
+            k: RRF constant (typically 60)
+
+        Returns:
+            Merged and re-ranked list of SearchResult objects
+        """
+        # Build score map: chunk_id -> (rrf_score, SearchResult)
+        score_map: Dict[str, tuple[float, SearchResult]] = {}
+
+        for ranked_list in ranked_lists:
+            for rank, result in enumerate(ranked_list, start=1):
+                # RRF formula: 1 / (k + rank)
+                rrf_contribution = 1.0 / (k + rank)
+
+                if result.chunk_id in score_map:
+                    # Add to existing score
+                    current_score, _ = score_map[result.chunk_id]
+                    score_map[result.chunk_id] = (
+                        current_score + rrf_contribution,
+                        result,
+                    )
+                else:
+                    # New result
+                    score_map[result.chunk_id] = (rrf_contribution, result)
+
+        # Convert to list and sort by RRF score descending
+        merged_results = []
+        for rrf_score, result in score_map.values():
+            # Create new SearchResult with RRF score
+            merged_result = SearchResult(
+                chunk_id=result.chunk_id,
+                file_path=result.file_path,
+                repo_name=result.repo_name,
+                symbol_name=result.symbol_name,
+                code_text=result.code_text,
+                score=rrf_score,
+                metadata=result.metadata,
+            )
+            merged_results.append(merged_result)
+
+        # Sort by RRF score descending
+        merged_results.sort(key=lambda x: x.score, reverse=True)
+
+        return merged_results
+
+    def hybrid_search(
+        self,
+        query: str,
+        n_results: int = 10,
+        repo_filter: Optional[List[str]] = None,
+        language_filter: Optional[str] = None,
+        alpha: float = 0.5,
+    ) -> List[SearchResult]:
+        """
+        Perform hybrid search combining semantic and keyword matching
+
+        Args:
+            query: Search query (works for both natural language and keywords)
+            n_results: Maximum number of results
+            repo_filter: Optional list of repo names to filter
+            language_filter: Optional language to filter
+            alpha: Balance between semantic (1.0) and keyword (0.0) search
+                   0.5 = equal weight (default)
+
+        Returns:
+            List of SearchResult objects ranked by hybrid score
+        """
+        # Fetch more results from each method for better fusion
+        fetch_count = n_results * 3
+
+        # Run both searches
+        semantic_results = self.semantic_search(
+            query=query,
+            n_results=fetch_count,
+            repo_filter=repo_filter,
+            language_filter=language_filter,
+        )
+
+        keyword_results = self.keyword_index.search(
+            query=query,
+            n_results=fetch_count,
+            repo_filter=repo_filter,
+            language_filter=language_filter,
+        )
+
+        # If alpha is 1.0, return only semantic results
+        if alpha >= 1.0:
+            return semantic_results[:n_results]
+
+        # If alpha is 0.0, return only keyword results
+        if alpha <= 0.0:
+            return keyword_results[:n_results]
+
+        # Combine using RRF with alpha weighting
+        # Weight the lists by duplicating results based on alpha
+        # Higher alpha = more weight to semantic
+        ranked_lists = []
+
+        if alpha > 0.5:
+            # Semantic gets more weight
+            ranked_lists.append(semantic_results)
+            ranked_lists.append(semantic_results)  # Double semantic
+            ranked_lists.append(keyword_results)
+        elif alpha < 0.5:
+            # Keyword gets more weight
+            ranked_lists.append(keyword_results)
+            ranked_lists.append(keyword_results)  # Double keyword
+            ranked_lists.append(semantic_results)
+        else:
+            # Equal weight
+            ranked_lists.append(semantic_results)
+            ranked_lists.append(keyword_results)
+
+        # Fuse results
+        merged_results = self._reciprocal_rank_fusion(ranked_lists)
+
+        # Return top n_results
+        return merged_results[:n_results]
+
+    def keyword_search(
+        self,
+        query: str,
+        n_results: int = 10,
+        repo_filter: Optional[List[str]] = None,
+        language_filter: Optional[str] = None,
+    ) -> List[SearchResult]:
+        """
+        Perform keyword-only search using BM25
+
+        Args:
+            query: Keyword search query
+            n_results: Maximum number of results
+            repo_filter: Optional list of repo names to filter
+            language_filter: Optional language to filter
+
+        Returns:
+            List of SearchResult objects ranked by BM25 score
+        """
+        return self.keyword_index.search(
+            query=query,
+            n_results=n_results,
+            repo_filter=repo_filter,
+            language_filter=language_filter,
+        )
 
     def find_by_symbol(
         self, symbol_name: str, repo_filter: Optional[List[str]] = None
@@ -289,8 +450,9 @@ class EmbeddingStore:
         """List all indexed repositories"""
         # Get all unique repo names from metadata
         # Note: ChromaDB doesn't have a direct way to get distinct values,
-        # so we need to fetch some samples and aggregate
-        results = self.collection.get(limit=10000)  # Adjust limit as needed
+        # so we need to fetch all chunks and aggregate
+        total_count = self.collection.count()
+        results = self.collection.get(limit=total_count if total_count > 0 else 10000)
 
         repos = set()
         for metadata in results["metadatas"]:
@@ -340,6 +502,8 @@ class EmbeddingStore:
 
         if results["ids"]:
             self.collection.delete(ids=results["ids"])
+            # Also delete from keyword index
+            self.keyword_index.delete_repo(repo_name)
             return len(results["ids"])
 
         return 0
@@ -362,6 +526,8 @@ class EmbeddingStore:
 
         if results["ids"]:
             self.collection.delete(ids=results["ids"])
+            # Also delete from keyword index
+            self.keyword_index.delete_file(repo_name, file_path)
             return len(results["ids"])
 
         return 0
@@ -373,3 +539,5 @@ class EmbeddingStore:
             name=self.collection_name,
             metadata={"description": "Code embeddings for semantic search"},
         )
+        # Also reset keyword index
+        self.keyword_index.reset()
