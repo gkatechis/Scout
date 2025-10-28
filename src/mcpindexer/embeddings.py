@@ -47,6 +47,7 @@ class EmbeddingStore:
         db_path: str = "./chroma_data",
         collection_name: str = "code_embeddings",
         model_name: Optional[str] = None,
+        embedding_batch_size: Optional[int] = None,
     ):
         """
         Initialize embedding store
@@ -56,11 +57,19 @@ class EmbeddingStore:
             collection_name: Name of the collection
             model_name: Optional embedding model name (defaults to
                 MCP_INDEXER_MODEL env var or DEFAULT_MODEL)
+            embedding_batch_size: Number of documents to encode at once (defaults to
+                MCP_INDEXER_EMBEDDING_BATCH_SIZE env var or 256)
         """
         self.db_path = db_path
         self.collection_name = collection_name
         self.model_name = model_name or os.getenv(
             "MCP_INDEXER_MODEL", self.DEFAULT_MODEL
+        )
+
+        # Set embedding batch size
+        self.embedding_batch_size = (
+            embedding_batch_size
+            or int(os.getenv("MCP_INDEXER_EMBEDDING_BATCH_SIZE", "256"))
         )
 
         # Initialize ChromaDB client
@@ -85,6 +94,9 @@ class EmbeddingStore:
     def add_chunks(self, chunks: List[CodeChunk]) -> None:
         """
         Add code chunks to the vector store
+
+        Processes embeddings in smaller batches for GPU memory efficiency,
+        then stores all chunks in ChromaDB in a single batch for write efficiency.
 
         Args:
             chunks: List of CodeChunk objects to embed and store
@@ -113,14 +125,18 @@ class EmbeddingStore:
             for chunk in chunks
         ]
 
-        # Generate embeddings
-        embeddings = self.model.encode(
-            documents, convert_to_numpy=True, show_progress_bar=False
-        ).tolist()
+        # Generate embeddings in smaller batches for GPU efficiency
+        all_embeddings = []
+        for i in range(0, len(documents), self.embedding_batch_size):
+            batch_docs = documents[i : i + self.embedding_batch_size]
+            batch_embeddings = self.model.encode(
+                batch_docs, convert_to_numpy=True, show_progress_bar=False
+            ).tolist()
+            all_embeddings.extend(batch_embeddings)
 
-        # Add to collection
+        # Add to collection (ChromaDB handles large batches well)
         self.collection.add(
-            ids=ids, embeddings=embeddings, documents=documents, metadatas=metadatas
+            ids=ids, embeddings=all_embeddings, documents=documents, metadatas=metadatas
         )
 
     def semantic_search(

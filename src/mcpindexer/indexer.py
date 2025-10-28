@@ -5,6 +5,7 @@ Coordinates parsing, chunking, embedding, and storage
 Tracks git state for incremental updates
 """
 
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Set
@@ -81,7 +82,7 @@ class RepoIndexer:
         self,
         file_filter: Optional[callable] = None,
         progress_callback: Optional[callable] = None,
-        batch_size: int = 1000,
+        db_batch_size: Optional[int] = None,
     ) -> IndexingResult:
         """
         Index the entire repository
@@ -89,11 +90,14 @@ class RepoIndexer:
         Args:
             file_filter: Optional function to filter files (path -> bool)
             progress_callback: Optional callback for progress updates
-            batch_size: Number of chunks to batch before adding to store
+            db_batch_size: Number of chunks to accumulate before adding to store
+                (defaults to MCP_INDEXER_DB_BATCH_SIZE env var or 5000)
 
         Returns:
             IndexingResult with statistics
         """
+        # Get batch size from env var or default
+        batch_size = db_batch_size or int(os.getenv("MCP_INDEXER_DB_BATCH_SIZE", "5000"))
         files_processed = 0
         files_skipped = 0
         errors = []
@@ -232,7 +236,8 @@ class RepoIndexer:
         chunks_indexed = 0
         errors = []
         all_chunks = []
-        batch_size = 1000
+        # Use same batch size logic as index()
+        batch_size = int(os.getenv("MCP_INDEXER_DB_BATCH_SIZE", "5000"))
 
         # Process each changed file
         for file_path_str in changed_files:

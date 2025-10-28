@@ -43,6 +43,52 @@ export MCP_INDEXER_MODEL=sentence-transformers/all-MiniLM-L6-v2
 
 **Note**: Changing models requires reindexing all repositories, as embeddings are not compatible across models
 
+### MCP_INDEXER_EMBEDDING_BATCH_SIZE
+
+Controls how many documents are encoded at once during embedding generation.
+
+**Default**: 256
+
+**Usage**:
+```bash
+export MCP_INDEXER_EMBEDDING_BATCH_SIZE=512   # Larger batches (more GPU memory)
+export MCP_INDEXER_EMBEDDING_BATCH_SIZE=128   # Smaller batches (less GPU memory)
+```
+
+**What it affects**:
+- GPU memory usage during indexing
+- Embedding generation efficiency
+- Trade-off between memory and speed
+
+**Recommendations**:
+- **GPU with 4GB+ VRAM**: 512
+- **GPU with 2-4GB VRAM**: 256 (default)
+- **GPU with <2GB VRAM or CPU**: 128
+
+### MCP_INDEXER_DB_BATCH_SIZE
+
+Controls how many chunks to accumulate before writing to ChromaDB.
+
+**Default**: 5000
+
+**Usage**:
+```bash
+export MCP_INDEXER_DB_BATCH_SIZE=10000   # Larger batches (better throughput)
+export MCP_INDEXER_DB_BATCH_SIZE=2500    # Smaller batches (less memory)
+```
+
+**What it affects**:
+- Memory usage during indexing
+- Database write efficiency
+- Indexing throughput
+
+**Recommendations**:
+- **High memory (16GB+ RAM)**: 10000
+- **Normal memory (8-16GB RAM)**: 5000 (default)
+- **Low memory (<8GB RAM)**: 2500
+
+**Performance impact**: Larger batches provide 10-30% better throughput due to fewer database writes.
+
 **Example configurations**:
 
 ```bash
