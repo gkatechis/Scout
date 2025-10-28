@@ -10,6 +10,7 @@ import pytest
 
 from mcpindexer.chunker import CodeChunk
 from mcpindexer.embeddings import EmbeddingStore, SearchResult
+from mcpindexer.keyword_search import tokenize_code
 
 
 @pytest.fixture
@@ -495,7 +496,8 @@ class TestEmbeddingStore:
         embedding_store.add_chunks(sample_chunks)
 
         # With alpha=0.0, should use only keyword search
-        results = embedding_store.hybrid_search("User", n_results=5, alpha=0.0)
+        # Use a term that appears in the chunks
+        results = embedding_store.hybrid_search("authenticate", n_results=5, alpha=0.0)
 
         assert len(results) > 0
 
@@ -569,7 +571,8 @@ class TestEmbeddingStore:
         embedding_store.add_chunks(sample_chunks)
 
         # Verify keyword search works before reset
-        results_before = embedding_store.keyword_search("user")
+        # Use a term that definitely appears in chunks
+        results_before = embedding_store.keyword_search("authenticate")
         assert len(results_before) > 0
 
         # Reset
@@ -599,6 +602,109 @@ class TestEmbeddingStore:
         # Results should be sorted by score descending
         scores = [r.score for r in merged]
         assert scores == sorted(scores, reverse=True)
+
+
+class TestCodeTokenization:
+    """Tests for code-aware tokenization"""
+
+    def test_tokenize_simple_words(self):
+        """Test tokenization of simple words"""
+        tokens = tokenize_code("hello world")
+        assert "hello" in tokens
+        assert "world" in tokens
+
+    def test_tokenize_snake_case(self):
+        """Test snake_case splitting"""
+        tokens = tokenize_code("authenticate_user")
+        assert "authenticate" in tokens
+        assert "user" in tokens
+        assert "authenticate_user" in tokens  # Original preserved
+
+    def test_tokenize_multiple_underscores(self):
+        """Test multiple underscore splitting"""
+        tokens = tokenize_code("get_user_from_database")
+        assert "get" in tokens
+        assert "user" in tokens
+        assert "from" in tokens
+        assert "database" in tokens
+        assert "get_user_from_database" in tokens
+
+    def test_tokenize_camel_case(self):
+        """Test CamelCase splitting"""
+        tokens = tokenize_code("getUserName")
+        assert "get" in tokens
+        assert "user" in tokens
+        assert "name" in tokens
+        assert "getusername" in tokens  # Lowercased original
+
+    def test_tokenize_pascal_case(self):
+        """Test PascalCase splitting"""
+        tokens = tokenize_code("AuthService")
+        assert "auth" in tokens
+        assert "service" in tokens
+        assert "authservice" in tokens
+
+    def test_tokenize_with_parentheses(self):
+        """Test tokenization with function call syntax"""
+        tokens = tokenize_code("hash_password(")
+        assert "hash" in tokens
+        assert "password" in tokens
+        assert "hash_password" in tokens
+
+    def test_tokenize_with_dots(self):
+        """Test tokenization with dot notation"""
+        tokens = tokenize_code("user.authenticate()")
+        assert "user" in tokens
+        assert "authenticate" in tokens
+
+    def test_tokenize_with_brackets(self):
+        """Test tokenization with brackets"""
+        tokens = tokenize_code("array[index]")
+        assert "array" in tokens
+        assert "index" in tokens
+
+    def test_tokenize_mixed_cases(self):
+        """Test mixed snake_case and CamelCase"""
+        tokens = tokenize_code("getUserName password_hash")
+        assert "get" in tokens
+        assert "user" in tokens
+        assert "name" in tokens
+        assert "password" in tokens
+        assert "hash" in tokens
+
+    def test_tokenize_code_with_special_chars(self):
+        """Test tokenization with various special characters"""
+        tokens = tokenize_code("self.hash_password(user.password)")
+        assert "self" in tokens
+        assert "hash" in tokens
+        assert "password" in tokens
+        assert "user" in tokens
+
+    def test_tokenize_preserves_lowercase(self):
+        """Test that all tokens are lowercase"""
+        tokens = tokenize_code("AuthService GetUserName")
+        for token in tokens:
+            assert token == token.lower()
+
+    def test_tokenize_empty_string(self):
+        """Test tokenization of empty string"""
+        tokens = tokenize_code("")
+        assert len(tokens) == 0
+
+    def test_tokenize_whitespace_only(self):
+        """Test tokenization of whitespace only"""
+        tokens = tokenize_code("   \t  \n  ")
+        assert len(tokens) == 0
+
+    def test_tokenize_returns_sorted_list(self):
+        """Test that tokens are returned in sorted order"""
+        tokens = tokenize_code("zebra apple banana")
+        assert tokens == sorted(tokens)
+
+    def test_tokenize_removes_duplicates(self):
+        """Test that duplicate tokens are removed"""
+        tokens = tokenize_code("user user user")
+        assert tokens.count("user") == 1
 
 
 if __name__ == "__main__":

@@ -5,6 +5,7 @@ Provides exact keyword matching using BM25 algorithm
 Complements semantic search for hybrid search capability
 """
 
+import re
 from typing import TYPE_CHECKING, Dict, List, Optional
 
 from rank_bm25 import BM25Okapi
@@ -13,6 +14,55 @@ from mcpindexer.chunker import CodeChunk
 
 if TYPE_CHECKING:
     from mcpindexer.embeddings import SearchResult
+
+
+def tokenize_code(text: str) -> List[str]:
+    """
+    Tokenize code text with code-aware splitting
+
+    Handles:
+    - snake_case: authenticate_user → authenticate, user, authenticate_user
+    - CamelCase: getUserName → get, user, name, getUserName
+    - Special chars: hash_password( → hash, password, hash_password
+
+    Args:
+        text: Code text to tokenize
+
+    Returns:
+        List of lowercase tokens (includes both original and split versions)
+    """
+    tokens = set()
+
+    # Split on whitespace first
+    words = text.split()
+
+    for word in words:
+        # Remove common special characters but keep the base word
+        # This handles cases like: "authenticate()" → "authenticate"
+        clean_word = re.sub(r'[^\w]', ' ', word)
+
+        # Split on the cleaned spaces
+        parts = clean_word.split()
+
+        for part in parts:
+            if not part:
+                continue
+
+            # Add the lowercase original part
+            tokens.add(part.lower())
+
+            # Split snake_case: authenticate_user → authenticate, user
+            if '_' in part:
+                snake_parts = part.split('_')
+                tokens.update(p.lower() for p in snake_parts if p)
+
+            # Split CamelCase: getUserName → get, user, name
+            # Match sequences of: lowercase letters OR uppercase followed by lowercase OR uppercase letters
+            camel_parts = re.findall(r'[a-z]+|[A-Z][a-z]+|[A-Z]+(?=[A-Z][a-z]|\b)', part)
+            if camel_parts and len(camel_parts) > 1:
+                tokens.update(p.lower() for p in camel_parts if p)
+
+    return sorted(list(tokens))
 
 
 class KeywordSearchIndex:
@@ -43,7 +93,7 @@ class KeywordSearchIndex:
 
         # Tokenize all documents (use context_text like semantic search)
         corpus = [chunk.context_text for chunk in self.chunks]
-        tokenized_corpus = [doc.lower().split() for doc in corpus]
+        tokenized_corpus = [tokenize_code(doc) for doc in corpus]
 
         # Create BM25 index
         self.bm25 = BM25Okapi(tokenized_corpus)
@@ -73,8 +123,8 @@ class KeywordSearchIndex:
         if not self.bm25 or not self.chunks:
             return []
 
-        # Tokenize query
-        tokenized_query = query.lower().split()
+        # Tokenize query using code-aware tokenization
+        tokenized_query = tokenize_code(query)
 
         # Get BM25 scores for all documents
         scores = self.bm25.get_scores(tokenized_query)
@@ -88,9 +138,8 @@ class KeywordSearchIndex:
             if language_filter and chunk.language != language_filter:
                 continue
 
-            # Only include results with non-zero scores
-            if score > 0:
-                results.append((score, chunk, idx))
+            # Include all results (BM25 can return negative scores for small corpora)
+            results.append((score, chunk, idx))
 
         # Sort by score descending
         results.sort(key=lambda x: x[0], reverse=True)
@@ -150,7 +199,7 @@ class KeywordSearchIndex:
         # Rebuild index
         if self.chunks:
             corpus = [chunk.context_text for chunk in self.chunks]
-            tokenized_corpus = [doc.lower().split() for doc in corpus]
+            tokenized_corpus = [tokenize_code(doc) for doc in corpus]
             self.bm25 = BM25Okapi(tokenized_corpus)
         else:
             self.bm25 = None
@@ -186,7 +235,7 @@ class KeywordSearchIndex:
         # Rebuild index
         if self.chunks:
             corpus = [chunk.context_text for chunk in self.chunks]
-            tokenized_corpus = [doc.lower().split() for doc in corpus]
+            tokenized_corpus = [tokenize_code(doc) for doc in corpus]
             self.bm25 = BM25Okapi(tokenized_corpus)
         else:
             self.bm25 = None
