@@ -75,18 +75,6 @@ mcpindexer check
 
    - "Show me all API endpoints"
 
-## Try the Demo
-
-```bash
-
-## Run the interactive demo (no setup required)
-
-python3 examples/demo.py
-
-```text
-
-This demonstrates the full indexing pipeline without requiring you to index your own repositories.
-
 ## Next Steps
 
 - **Full documentation:** See [README.md](README.md) for detailed usage
@@ -94,8 +82,6 @@ This demonstrates the full indexing pipeline without requiring you to index your
 - **Configuration options:** See [docs/CONFIGURATION.md](docs/CONFIGURATION.md)
 
 - **Testing:** See [TESTING.md](TESTING.md) for development setup
-
-- **Examples:** See [examples/README.md](examples/README.md) for advanced usage
 
 ## Troubleshooting
 
@@ -124,5 +110,3 @@ This demonstrates the full indexing pipeline without requiring you to index your
 - Issues: [GitHub Issues](https://github.com/gkatechis/mcpIndexer/issues)
 
 - Documentation: [README.md](README.md)
-
-- Examples: [examples/](examples/)

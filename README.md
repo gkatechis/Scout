@@ -12,7 +12,6 @@ Semantic code search indexer for AI tools via the Model Context Protocol (MCP).
 - **[docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)** - Common issues and solutions
 - **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** - System architecture and internals
 - **[TESTING.md](TESTING.md)** - Testing guide
-- **[examples/README.md](examples/README.md)** - Example scripts and usage patterns
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - How to contribute
 - **[AGENTS.MD](AGENTS.MD)** - Instructions for AI coding agents
 
@@ -223,41 +222,11 @@ The MCP server exposes 13 tools organized by functionality:
 - **`suggest_missing_repos`** - Suggest repositories to add
 - **`get_stack_status`** - Get overall stack status
 
-For detailed tool documentation and usage examples, see [examples/README.md](examples/README.md).
-
 ## Configuration
 
 Configuration is stored at `~/.mcpindexer/stack.json` and tracks all indexed repositories with their metadata.
 
 For detailed configuration options including environment variables, custom database locations, and advanced features, see [docs/CONFIGURATION.md](docs/CONFIGURATION.md).
-
-## Usage Examples
-
-For detailed usage examples and patterns, see:
-- **[examples/README.md](examples/README.md)** - Example scripts and usage patterns
-- **[examples/demo.py](examples/demo.py)** - Complete end-to-end demo
-
-Quick example:
-```python
-import os
-from mcpindexer.indexer import MultiRepoIndexer
-from mcpindexer.embeddings import EmbeddingStore
-
-# Initialize
-db_path = os.getenv("MCP_INDEXER_DB_PATH", os.path.expanduser("~/.mcpindexer/db"))
-store = EmbeddingStore(db_path=db_path, collection_name='mcp_code_index')
-indexer = MultiRepoIndexer(store)
-
-# Add and index your repository
-indexer.add_repo(
-    repo_path='/path/to/your/repo',
-    repo_name='my-repo',
-    auto_index=True
-)
-
-# Search
-results = store.semantic_search("authentication logic", n_results=10)
-```
 
 ## Troubleshooting
 
@@ -283,9 +252,6 @@ pytest tests/ -v
 
 # Run specific test file
 pytest tests/test_embeddings.py -v
-
-# Run example scripts
-python3 examples/demo.py
 ```
 
 See [TESTING.md](TESTING.md) for the complete testing guide.
@@ -307,4 +273,3 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for:
 
 - **Documentation**: See the docs listed at the top of this README
 - **Issues**: Report bugs or request features via [GitHub Issues](https://github.com/gkatechis/mcpIndexer/issues)
-- **Examples**: Check the `examples/` directory for usage patterns

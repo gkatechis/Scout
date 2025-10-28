@@ -22,7 +22,7 @@ RUN chmod +x setup.sh
 RUN ./setup.sh
 
 # Test installation
-CMD ["python3", "examples/demo.py"]
+CMD ["python3", "-m", "mcpindexer", "check"]
 ```
 
 Build and run:
@@ -47,10 +47,8 @@ cd mcpIndexer
 # Activate virtual environment
 source venv/bin/activate
 
-# Run demo
-python3 examples/demo.py
-
 # Test CLI commands
+python3 -m mcpindexer check
 python3 -m mcpindexer --help
 ```
 
@@ -69,8 +67,8 @@ pip install -e /path/to/mcpIndexer
 # Test imports
 python3 -c "from mcpindexer.indexer import MultiRepoIndexer; print('OK')"
 
-# Run demo
-python3 /path/to/mcpIndexer/examples/demo.py
+# Test CLI
+python3 -m mcpindexer check
 ```
 
 ## Pre-Release Checklist
@@ -78,14 +76,13 @@ python3 /path/to/mcpIndexer/examples/demo.py
 Before releasing to GitHub, verify:
 
 - [ ] No hardcoded paths in source code
-- [ ] No organization-specific references (except in examples/)
+- [ ] No organization-specific references
 - [ ] `.gitignore` excludes all local data
 - [ ] `.mcp.json` is not tracked (only `.mcp.json.example`)
 - [ ] README has generic setup instructions
 - [ ] LICENSE file exists
 - [ ] `requirements.txt` is complete
 - [ ] `pyproject.toml` is configured correctly
-- [ ] Examples run without errors
 - [ ] Setup script works on clean environment
 - [ ] Documentation is complete
 
@@ -104,21 +101,6 @@ pytest tests/ --cov=mcpindexer --cov-report=html
 
 # Specific test file
 pytest tests/test_embeddings.py -v
-```
-
-## Integration Tests
-
-Run integration tests with example scripts:
-
-```bash
-# Demo (no external dependencies)
-python3 examples/demo.py
-
-# Test with a real repository (update paths)
-python3 examples/test_real_repo.py
-
-# Test chunking
-python3 examples/test_chunker.py
 ```
 
 ## Manual Testing Checklist

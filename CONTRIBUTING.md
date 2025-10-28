@@ -239,8 +239,6 @@ For AI agents working on this project, we use [Beads](https://github.com/steveye
 
 - **Issues**: Report bugs or request features via GitHub Issues
 
-- **Examples**: Check the `examples/` directory for usage patterns
-
 ## Code of Conduct
 
 - Be respectful and inclusive
