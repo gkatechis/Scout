@@ -16,8 +16,6 @@ Semantic code search indexer for AI tools via the Model Context Protocol (MCP).
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - How to contribute
 - **[AGENTS.MD](AGENTS.MD)** - Instructions for AI coding agents
 
-**Note**: The root directory contains Zendesk-specific documentation files (`ZENDESK_*.md`) that demonstrate mcpIndexer usage with a large organization's codebase. These serve as examples and can be adapted for your organization.
-
 ## For AI Coding Agents
 
 **If you're an AI agent working on this project**, please read [AGENTS.MD](AGENTS.MD) first. It contains instructions for using Beads issue tracking to manage tasks systematically across sessions.
