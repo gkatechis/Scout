@@ -183,6 +183,57 @@ class TestEmbeddingStore:
         assert "other-repo" in repos
         assert len(repos) == 2
 
+    def test_list_repos_with_large_chunk_count(self, embedding_store):
+        """Test listing repositories when chunk count exceeds 10,000"""
+        from mcpindexer.chunker import CodeChunk
+
+        # Create 15 repositories with ~800 chunks each to exceed 10,000 total
+        # Add in batches to respect ChromaDB's batch size limit
+        num_repos = 15
+        chunks_per_repo = 800
+        batch_size = 5000
+
+        for repo_idx in range(num_repos):
+            repo_name = f"large-repo-{repo_idx}"
+            chunks = []
+            for chunk_idx in range(chunks_per_repo):
+                chunks.append(
+                    CodeChunk(
+                        chunk_id=f"{repo_name}:chunk:{chunk_idx}",
+                        file_path=f"file_{chunk_idx % 10}.py",
+                        repo_name=repo_name,
+                        language="python",
+                        chunk_type="function",
+                        code_text=f"def function_{chunk_idx}(): pass",
+                        start_line=chunk_idx * 10,
+                        end_line=chunk_idx * 10 + 5,
+                        symbol_name=f"function_{chunk_idx}",
+                        parent_class=None,
+                        imports=[],
+                        context_text=f"def function_{chunk_idx}(): pass",
+                        token_count=10,
+                    )
+                )
+                # Add in batches to respect ChromaDB limits
+                if len(chunks) >= batch_size:
+                    embedding_store.add_chunks(chunks)
+                    chunks = []
+
+            # Add remaining chunks for this repo
+            if chunks:
+                embedding_store.add_chunks(chunks)
+
+        # Verify total chunk count exceeds 10,000
+        total_chunks = embedding_store.collection.count()
+        assert total_chunks > 10000, f"Test requires >10k chunks, got {total_chunks}"
+
+        # List repos should still find all repositories
+        repos = embedding_store.list_repos()
+
+        assert len(repos) == num_repos
+        for repo_idx in range(num_repos):
+            assert f"large-repo-{repo_idx}" in repos
+
     def test_get_repo_stats(self, embedding_store, sample_chunks):
         """Test getting repository statistics"""
         embedding_store.add_chunks(sample_chunks)
@@ -374,6 +425,180 @@ class TestEmbeddingStore:
 
         # Cleanup
         store.reset()
+
+    def test_keyword_search(self, embedding_store, sample_chunks):
+        """Test keyword search functionality"""
+        embedding_store.add_chunks(sample_chunks)
+
+        # Search for exact keyword
+        results = embedding_store.keyword_search("authenticate_user", n_results=5)
+
+        assert len(results) > 0
+        assert all(isinstance(r, SearchResult) for r in results)
+
+        # Should find chunks with the keyword
+        auth_results = [r for r in results if "authenticate" in r.code_text.lower()]
+        assert len(auth_results) > 0
+
+    def test_keyword_search_exact_match(self, embedding_store, sample_chunks):
+        """Test keyword search finds exact matches"""
+        embedding_store.add_chunks(sample_chunks)
+
+        # Search for a specific function name that appears in chunks
+        results = embedding_store.keyword_search("login")
+
+        assert len(results) > 0
+        # Should find the login function
+        assert any("login" in r.code_text.lower() for r in results)
+
+    def test_keyword_search_with_filters(self, embedding_store, sample_chunks):
+        """Test keyword search with repo and language filters"""
+        embedding_store.add_chunks(sample_chunks)
+
+        # Search with repo filter
+        results = embedding_store.keyword_search(
+            "user", n_results=10, repo_filter=["test-repo"]
+        )
+
+        assert all(r.repo_name == "test-repo" for r in results)
+
+        # Search with language filter
+        results = embedding_store.keyword_search(
+            "function", n_results=10, language_filter="javascript"
+        )
+
+        assert all(r.metadata["language"] == "javascript" for r in results)
+
+    def test_hybrid_search(self, embedding_store, sample_chunks):
+        """Test hybrid search combining semantic and keyword"""
+        embedding_store.add_chunks(sample_chunks)
+
+        # Hybrid search should work for both natural language and keywords
+        results = embedding_store.hybrid_search("user authentication", n_results=5)
+
+        assert len(results) > 0
+        assert all(isinstance(r, SearchResult) for r in results)
+
+    def test_hybrid_search_alpha_semantic(self, embedding_store, sample_chunks):
+        """Test hybrid search with alpha=1.0 (pure semantic)"""
+        embedding_store.add_chunks(sample_chunks)
+
+        # With alpha=1.0, should use only semantic search
+        results = embedding_store.hybrid_search(
+            "authentication", n_results=5, alpha=1.0
+        )
+
+        assert len(results) > 0
+
+    def test_hybrid_search_alpha_keyword(self, embedding_store, sample_chunks):
+        """Test hybrid search with alpha=0.0 (pure keyword)"""
+        embedding_store.add_chunks(sample_chunks)
+
+        # With alpha=0.0, should use only keyword search
+        results = embedding_store.hybrid_search("User", n_results=5, alpha=0.0)
+
+        assert len(results) > 0
+
+    def test_hybrid_search_alpha_balanced(self, embedding_store, sample_chunks):
+        """Test hybrid search with alpha=0.5 (balanced)"""
+        embedding_store.add_chunks(sample_chunks)
+
+        # With alpha=0.5, should combine both methods
+        results = embedding_store.hybrid_search(
+            "authenticate user", n_results=5, alpha=0.5
+        )
+
+        assert len(results) > 0
+
+    def test_hybrid_search_with_filters(self, embedding_store, sample_chunks):
+        """Test hybrid search with repo and language filters"""
+        embedding_store.add_chunks(sample_chunks)
+
+        # Test with repo filter
+        results = embedding_store.hybrid_search(
+            "authentication", n_results=10, repo_filter=["test-repo"]
+        )
+
+        assert len(results) > 0
+        assert all(r.repo_name == "test-repo" for r in results)
+
+        # Test with language filter
+        results = embedding_store.hybrid_search(
+            "function", n_results=10, language_filter="python"
+        )
+
+        assert all(r.metadata["language"] == "python" for r in results)
+
+    def test_keyword_index_maintained_on_delete_repo(
+        self, embedding_store, sample_chunks
+    ):
+        """Test that keyword index is cleaned up when repo is deleted"""
+        embedding_store.add_chunks(sample_chunks)
+
+        # Verify keyword search works before deletion
+        results_before = embedding_store.keyword_search("authenticate_user")
+        assert len(results_before) > 0
+
+        # Delete repo
+        embedding_store.delete_repo("test-repo")
+
+        # Keyword search should not find deleted chunks
+        results_after = embedding_store.keyword_search("authenticate_user")
+        # Should either be empty or not contain test-repo chunks
+        for result in results_after:
+            assert result.repo_name != "test-repo"
+
+    def test_keyword_index_maintained_on_delete_file(
+        self, embedding_store, sample_chunks
+    ):
+        """Test that keyword index is cleaned up when file is deleted"""
+        embedding_store.add_chunks(sample_chunks)
+
+        # Delete specific file
+        embedding_store.delete_file("test-repo", "auth.py")
+
+        # Keyword search should not find deleted file
+        results = embedding_store.keyword_search("authenticate_user")
+
+        # Should not find chunks from deleted file
+        auth_file_results = [r for r in results if r.file_path == "auth.py"]
+        assert len(auth_file_results) == 0
+
+    def test_keyword_index_maintained_on_reset(self, embedding_store, sample_chunks):
+        """Test that keyword index is cleared on reset"""
+        embedding_store.add_chunks(sample_chunks)
+
+        # Verify keyword search works before reset
+        results_before = embedding_store.keyword_search("user")
+        assert len(results_before) > 0
+
+        # Reset
+        embedding_store.reset()
+
+        # Keyword search should return no results
+        results_after = embedding_store.keyword_search("user")
+        assert len(results_after) == 0
+
+    def test_reciprocal_rank_fusion(self, embedding_store, sample_chunks):
+        """Test RRF merging of search results"""
+        embedding_store.add_chunks(sample_chunks)
+
+        # Get results from both methods
+        semantic_results = embedding_store.semantic_search("authentication", n_results=3)
+        keyword_results = embedding_store.keyword_search("authentication", n_results=3)
+
+        # Use RRF to merge
+        merged = embedding_store._reciprocal_rank_fusion(
+            [semantic_results, keyword_results], k=60
+        )
+
+        # Should return merged results
+        assert len(merged) > 0
+        # All results should have RRF scores
+        assert all(hasattr(r, "score") for r in merged)
+        # Results should be sorted by score descending
+        scores = [r.score for r in merged]
+        assert scores == sorted(scores, reverse=True)
 
 
 if __name__ == "__main__":

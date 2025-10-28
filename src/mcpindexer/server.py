@@ -48,13 +48,13 @@ async def list_tools() -> list[Tool]:
     return [
         Tool(
             name="semantic_search",
-            description="Search for code using natural language queries across indexed repositories",
+            description="Search for code using natural language queries across indexed repositories. Supports hybrid search combining semantic understanding with exact keyword matching.",
             inputSchema={
                 "type": "object",
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "Natural language search query",
+                        "description": "Search query (natural language or keywords)",
                     },
                     "repos": {
                         "type": "array",
@@ -69,6 +69,19 @@ async def list_tools() -> list[Tool]:
                         "type": "integer",
                         "description": "Maximum number of results to return",
                         "default": 10,
+                    },
+                    "search_mode": {
+                        "type": "string",
+                        "enum": ["hybrid", "semantic", "keyword"],
+                        "description": "Search mode: 'hybrid' (default, best results), 'semantic' (natural language), or 'keyword' (exact matching)",
+                        "default": "hybrid",
+                    },
+                    "alpha": {
+                        "type": "number",
+                        "description": "Hybrid search balance: 1.0 = pure semantic, 0.5 = balanced (default), 0.0 = pure keyword. Only used in hybrid mode.",
+                        "default": 0.5,
+                        "minimum": 0.0,
+                        "maximum": 1.0,
                     },
                 },
                 "required": ["query"],
@@ -250,14 +263,32 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             repos = arguments.get("repos", None)
             language = arguments.get("language", None)
             limit = arguments.get("limit", 10)
+            search_mode = arguments.get("search_mode", "hybrid")
+            alpha = arguments.get("alpha", 0.5)
 
-            # Perform semantic search
-            results = indexer.embedding_store.semantic_search(
-                query=query,
-                n_results=limit,
-                repo_filter=repos,
-                language_filter=language,
-            )
+            # Perform search based on mode
+            if search_mode == "keyword":
+                results = indexer.embedding_store.keyword_search(
+                    query=query,
+                    n_results=limit,
+                    repo_filter=repos,
+                    language_filter=language,
+                )
+            elif search_mode == "semantic":
+                results = indexer.embedding_store.semantic_search(
+                    query=query,
+                    n_results=limit,
+                    repo_filter=repos,
+                    language_filter=language,
+                )
+            else:  # hybrid (default)
+                results = indexer.embedding_store.hybrid_search(
+                    query=query,
+                    n_results=limit,
+                    repo_filter=repos,
+                    language_filter=language,
+                    alpha=alpha,
+                )
 
             if not results:
                 return [
@@ -267,7 +298,12 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 ]
 
             # Format results
-            output = [f"Found {len(results)} results for '{query}':\n"]
+            mode_label = {
+                "hybrid": "hybrid",
+                "semantic": "semantic",
+                "keyword": "keyword",
+            }.get(search_mode, "hybrid")
+            output = [f"Found {len(results)} {mode_label} search results for '{query}':\n"]
             for i, result in enumerate(results, 1):
                 output.append(f"\n{i}. {result.file_path}")
                 if result.symbol_name:

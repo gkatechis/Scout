@@ -5,9 +5,11 @@ Coordinates parsing, chunking, embedding, and storage
 Tracks git state for incremental updates
 """
 
+import multiprocessing as mp
+import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Tuple
 
 import git
 
@@ -17,6 +19,49 @@ from mcpindexer.dependency_storage import DependencyStorage
 from mcpindexer.embeddings import EmbeddingStore
 from mcpindexer.parser import CodeParser
 from mcpindexer.stack_config import IndexingStatus, StackConfig
+
+
+def _process_file_worker(
+    file_path: Path, repo_name: str
+) -> Tuple[Optional[str], Optional[List[CodeChunk]], Optional[str]]:
+    """
+    Worker function for parallel file processing.
+    Must be at module level for multiprocessing pickling.
+
+    Args:
+        file_path: Path to file to process
+        repo_name: Repository name for chunking context
+
+    Returns:
+        Tuple of (file_path_str, chunks, error_message)
+        - If successful: (file_path, [chunks], None)
+        - If error: (file_path, None, error_message)
+        - If skipped: (None, None, None)
+    """
+    try:
+        parser = CodeParser()
+        chunker = CodeChunker(repo_name=repo_name)
+
+        # Parse file
+        parsed = parser.parse_file(str(file_path))
+        if not parsed:
+            return (None, None, None)  # Skipped
+
+        # Chunk file
+        chunks = chunker.chunk_file(parsed)
+
+        # Fix chunk IDs to be unique across workers using file path hash
+        # This prevents duplicate IDs when multiple workers generate chunks
+        import hashlib
+
+        file_hash = hashlib.md5(str(file_path).encode()).hexdigest()[:8]
+        for i, chunk in enumerate(chunks):
+            chunk.chunk_id = f"{repo_name}:{file_hash}:chunk:{i}"
+
+        return (str(file_path), chunks, None)
+
+    except Exception as e:
+        return (str(file_path), None, str(e))
 
 
 @dataclass
@@ -52,7 +97,13 @@ class RepoIndexer:
         "env",
     }
 
-    def __init__(self, repo_path: str, repo_name: str, embedding_store: EmbeddingStore):
+    def __init__(
+        self,
+        repo_path: str,
+        repo_name: str,
+        embedding_store: EmbeddingStore,
+        worker_count: Optional[int] = None,
+    ):
         """
         Initialize repository indexer
 
@@ -60,10 +111,18 @@ class RepoIndexer:
             repo_path: Path to the repository
             repo_name: Name identifier for the repository
             embedding_store: EmbeddingStore instance for persistence
+            worker_count: Number of parallel workers for file processing.
+                         If None, uses CPU count. Set to 1 to disable parallel processing.
         """
         self.repo_path = Path(repo_path)
         self.repo_name = repo_name
         self.embedding_store = embedding_store
+
+        # Configure worker count for parallel processing
+        if worker_count is None:
+            self.worker_count = mp.cpu_count()
+        else:
+            self.worker_count = max(1, worker_count)
 
         # Initialize components
         self.parser = CodeParser()
@@ -104,46 +163,104 @@ class RepoIndexer:
         # Get current git commit
         git_commit = self._get_git_commit()
 
-        # Scan repository
+        # Collect all files to process
+        files_to_process = []
         for file_path in self._scan_repo():
-            # Apply filter if provided
             if file_filter and not file_filter(file_path):
                 continue
+            files_to_process.append(file_path)
 
-            try:
-                # Parse file
-                parsed = self.parser.parse_file(str(file_path))
-                if not parsed:
+        # Process files in parallel if worker_count > 1
+        if self.worker_count > 1:
+            # Disable tokenizer parallelism to avoid fork issues
+            os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+            # Use multiprocessing.Pool for parallel processing
+            with mp.Pool(processes=self.worker_count) as pool:
+                # Process files in parallel
+                results = pool.starmap(
+                    _process_file_worker,
+                    [(file_path, self.repo_name) for file_path in files_to_process],
+                )
+
+                # Collect results
+                for file_path_str, chunks, error in results:
+                    if error:
+                        # Error occurred
+                        files_skipped += 1
+                        errors.append(f"{file_path_str}: {error}")
+                    elif file_path_str is None:
+                        # File was skipped
+                        files_skipped += 1
+                    else:
+                        # Success - need to re-parse for dependency analyzer
+                        # (dependency analyzer is not thread-safe)
+                        try:
+                            parsed = self.parser.parse_file(file_path_str)
+                            if parsed:
+                                self.dependency_analyzer.add_file(parsed)
+                        except:
+                            pass  # Dependency analysis failure is non-critical
+
+                        all_chunks.extend(chunks)
+                        total_chunks_created += len(chunks)
+                        files_processed += 1
+
+                        # Add chunks in batches
+                        if len(all_chunks) >= batch_size:
+                            try:
+                                self.embedding_store.add_chunks(all_chunks)
+                                chunks_indexed += len(all_chunks)
+                                all_chunks = []
+                            except Exception as e:
+                                errors.append(f"Embedding batch error: {str(e)}")
+                                all_chunks = []
+
+                        # Progress callback
+                        if progress_callback and files_processed % 10 == 0:
+                            progress_callback(
+                                files_processed, chunks_indexed + len(all_chunks)
+                            )
+
+        else:
+            # Sequential processing (worker_count == 1)
+            for file_path in files_to_process:
+                try:
+                    # Parse file
+                    parsed = self.parser.parse_file(str(file_path))
+                    if not parsed:
+                        files_skipped += 1
+                        continue
+
+                    # Add to dependency analyzer
+                    self.dependency_analyzer.add_file(parsed)
+
+                    # Chunk code
+                    chunks = self.chunker.chunk_file(parsed)
+                    all_chunks.extend(chunks)
+                    total_chunks_created += len(chunks)
+
+                    files_processed += 1
+
+                    # Add chunks in batches
+                    if len(all_chunks) >= batch_size:
+                        try:
+                            self.embedding_store.add_chunks(all_chunks)
+                            chunks_indexed += len(all_chunks)
+                            all_chunks = []
+                        except Exception as e:
+                            errors.append(f"Embedding batch error: {str(e)}")
+                            all_chunks = []
+
+                    # Progress callback
+                    if progress_callback and files_processed % 10 == 0:
+                        progress_callback(
+                            files_processed, chunks_indexed + len(all_chunks)
+                        )
+
+                except Exception as e:
                     files_skipped += 1
-                    continue
-
-                # Add to dependency analyzer
-                self.dependency_analyzer.add_file(parsed)
-
-                # Chunk code
-                chunks = self.chunker.chunk_file(parsed)
-                all_chunks.extend(chunks)
-                total_chunks_created += len(chunks)
-
-                files_processed += 1
-
-                # Add chunks in batches to avoid memory exhaustion
-                if len(all_chunks) >= batch_size:
-                    try:
-                        self.embedding_store.add_chunks(all_chunks)
-                        chunks_indexed += len(all_chunks)
-                        all_chunks = []  # Clear batch
-                    except Exception as e:
-                        errors.append(f"Embedding batch error: {str(e)}")
-                        all_chunks = []  # Clear batch even on error
-
-                # Progress callback
-                if progress_callback and files_processed % 10 == 0:
-                    progress_callback(files_processed, chunks_indexed + len(all_chunks))
-
-            except Exception as e:
-                files_skipped += 1
-                errors.append(f"{file_path}: {str(e)}")
+                    errors.append(f"{file_path}: {str(e)}")
 
         # Add remaining chunks
         if all_chunks:
@@ -434,7 +551,11 @@ class MultiRepoIndexer:
         self.dependency_storage = DependencyStorage()
 
     def add_repo(
-        self, repo_path: str, repo_name: str, auto_index: bool = True
+        self,
+        repo_path: str,
+        repo_name: str,
+        auto_index: bool = True,
+        worker_count: Optional[int] = None,
     ) -> IndexingResult:
         """
         Add a repository to the stack
@@ -443,6 +564,7 @@ class MultiRepoIndexer:
             repo_path: Path to the repository
             repo_name: Name identifier
             auto_index: If True, index immediately
+            worker_count: Number of parallel workers. If None, uses CPU count.
 
         Returns:
             IndexingResult if auto_index=True, else empty result
@@ -454,6 +576,7 @@ class MultiRepoIndexer:
             repo_path=repo_path,
             repo_name=repo_name,
             embedding_store=self.embedding_store,
+            worker_count=worker_count,
         )
 
         self.repo_indexers[repo_name] = indexer
@@ -563,7 +686,9 @@ class MultiRepoIndexer:
         for repo_name, indexer in self.repo_indexers.items():
             # Get last indexed commit from stack config for incremental reindexing
             repo_config = self.stack_config.get_repo(repo_name)
-            since_commit = repo_config.last_commit if repo_config and not force else None
+            since_commit = (
+                repo_config.last_commit if repo_config and not force else None
+            )
 
             # Update status
             self.stack_config.update_repo_status(repo_name, IndexingStatus.INDEXING)
