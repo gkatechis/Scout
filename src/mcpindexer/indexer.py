@@ -238,8 +238,8 @@ class RepoIndexer:
         for file_path_str in changed_files:
             file_path = self.repo_path / file_path_str
 
-            # Delete old chunks for this file
-            deleted = self.embedding_store.delete_file(self.repo_name, file_path_str)
+            # Delete old chunks for this file (use absolute path to match stored paths)
+            deleted = self.embedding_store.delete_file(self.repo_name, str(file_path))
             chunks_deleted += deleted
 
             # Skip if file doesn't exist anymore (deleted)
