@@ -184,13 +184,17 @@ class RepoIndexer:
         return chunks
 
     def reindex(
-        self, force: bool = False, progress_callback: Optional[callable] = None
+        self,
+        force: bool = False,
+        since_commit: Optional[str] = None,
+        progress_callback: Optional[callable] = None,
     ) -> IndexingResult:
         """
         Reindex the repository
 
         Args:
             force: If True, reindex all files. If False, only changed files.
+            since_commit: Git commit to compare against. If None, uses current commit.
             progress_callback: Optional progress callback
 
         Returns:
@@ -200,10 +204,110 @@ class RepoIndexer:
             # Delete existing chunks and reindex everything
             self.embedding_store.delete_repo(self.repo_name)
             return self.index(progress_callback=progress_callback)
-        else:
-            # Incremental reindex (only changed files)
-            # TODO: Implement git diff-based incremental indexing
+
+        # Incremental reindex (only changed files)
+        if not since_commit or not self.git_repo:
+            # No commit to compare against, do full reindex
+            self.embedding_store.delete_repo(self.repo_name)
             return self.index(progress_callback=progress_callback)
+
+        # Get changed files
+        changed_files = self.get_changed_files(since_commit)
+        if not changed_files:
+            # No files changed, return empty result
+            return IndexingResult(
+                repo_name=self.repo_name,
+                files_processed=0,
+                files_skipped=0,
+                chunks_created=0,
+                chunks_indexed=0,
+                git_commit=self._get_git_commit(),
+                errors=[],
+            )
+
+        files_processed = 0
+        files_skipped = 0
+        chunks_deleted = 0
+        chunks_created = 0
+        chunks_indexed = 0
+        errors = []
+        all_chunks = []
+        batch_size = 1000
+
+        # Process each changed file
+        for file_path_str in changed_files:
+            file_path = self.repo_path / file_path_str
+
+            # Delete old chunks for this file (use absolute path to match stored paths)
+            deleted = self.embedding_store.delete_file(self.repo_name, str(file_path))
+            chunks_deleted += deleted
+
+            # Skip if file doesn't exist anymore (deleted)
+            if not file_path.exists():
+                files_skipped += 1
+                continue
+
+            # Skip if not a supported file
+            if file_path.suffix not in self.SUPPORTED_EXTENSIONS:
+                files_skipped += 1
+                continue
+
+            # Skip if in skip directory
+            if any(skip in file_path.parts for skip in self.SKIP_DIRECTORIES):
+                files_skipped += 1
+                continue
+
+            try:
+                # Parse and chunk the file
+                parsed = self.parser.parse_file(str(file_path))
+                if not parsed:
+                    files_skipped += 1
+                    continue
+
+                # Add to dependency analyzer
+                self.dependency_analyzer.add_file(parsed)
+
+                # Chunk code
+                chunks = self.chunker.chunk_file(parsed)
+                all_chunks.extend(chunks)
+                chunks_created += len(chunks)
+                files_processed += 1
+
+                # Add chunks in batches
+                if len(all_chunks) >= batch_size:
+                    try:
+                        self.embedding_store.add_chunks(all_chunks)
+                        chunks_indexed += len(all_chunks)
+                        all_chunks = []
+                    except Exception as e:
+                        errors.append(f"Embedding batch error: {str(e)}")
+                        all_chunks = []
+
+                # Progress callback
+                if progress_callback and files_processed % 10 == 0:
+                    progress_callback(files_processed, chunks_indexed + len(all_chunks))
+
+            except Exception as e:
+                files_skipped += 1
+                errors.append(f"{file_path_str}: {str(e)}")
+
+        # Add remaining chunks
+        if all_chunks:
+            try:
+                self.embedding_store.add_chunks(all_chunks)
+                chunks_indexed += len(all_chunks)
+            except Exception as e:
+                errors.append(f"Embedding final batch error: {str(e)}")
+
+        return IndexingResult(
+            repo_name=self.repo_name,
+            files_processed=files_processed,
+            files_skipped=files_skipped,
+            chunks_created=chunks_created,
+            chunks_indexed=chunks_indexed,
+            git_commit=self._get_git_commit(),
+            errors=errors,
+        )
 
     def get_stats(self) -> Dict:
         """
@@ -450,15 +554,38 @@ class MultiRepoIndexer:
         Reindex all repositories
 
         Args:
-            force: If True, force full reindex
+            force: If True, force full reindex. Otherwise uses incremental reindexing.
 
         Returns:
             List of IndexingResult for each repo
         """
         results = []
         for repo_name, indexer in self.repo_indexers.items():
-            result = indexer.reindex(force=force)
-            results.append(result)
+            # Get last indexed commit from stack config for incremental reindexing
+            repo_config = self.stack_config.get_repo(repo_name)
+            since_commit = repo_config.last_commit if repo_config and not force else None
+
+            # Update status
+            self.stack_config.update_repo_status(repo_name, IndexingStatus.INDEXING)
+
+            try:
+                result = indexer.reindex(force=force, since_commit=since_commit)
+
+                # Update status and commit
+                self.stack_config.update_repo_status(
+                    repo_name,
+                    IndexingStatus.INDEXED,
+                    last_commit=result.git_commit,
+                    files_indexed=result.files_processed,
+                    chunks_indexed=result.chunks_indexed,
+                )
+
+                results.append(result)
+            except Exception as e:
+                self.stack_config.update_repo_status(
+                    repo_name, IndexingStatus.ERROR, error_message=str(e)
+                )
+                raise
 
         return results
 
