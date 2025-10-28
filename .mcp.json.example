@@ -7,7 +7,8 @@
       ],
       "env": {
         "MCP_INDEXER_DB_PATH": "~/.mcpindexer/db",
-        "MCP_INDEXER_MODEL": "sentence-transformers/multi-qa-mpnet-base-dot-v1"
+        "MCP_INDEXER_MODEL": "sentence-transformers/multi-qa-mpnet-base-dot-v1",
+        "MCP_INDEXER_DEVICE": "auto"
       }
     }
   }
@@ -27,5 +28,8 @@
 //   - MCP_INDEXER_DB_PATH: Database location (default: ~/.mcpindexer/db)
 //   - MCP_INDEXER_MODEL: Embedding model (default: multi-qa-mpnet-base-dot-v1)
 //     Alternative models: all-MiniLM-L6-v2 (good balance), all-mpnet-base-v2 (best quality)
+//   - MCP_INDEXER_DEVICE: Compute device (default: auto-detect)
+//     Options: "auto" (auto-detect), "cuda" (NVIDIA GPU), "mps" (Apple Silicon), "cpu" (force CPU)
+//     GPU provides 10-50x speedup for indexing and queries
 //
 // Note: PYTHONPATH is NOT included because pip install -e . makes it unnecessary
