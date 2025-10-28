@@ -344,6 +344,28 @@ class EmbeddingStore:
 
         return 0
 
+    def delete_file(self, repo_name: str, file_path: str) -> int:
+        """
+        Delete all chunks for a specific file in a repository
+
+        Args:
+            repo_name: Repository name
+            file_path: Relative path to the file within the repository
+
+        Returns:
+            Number of chunks deleted
+        """
+        # Get all IDs for the file
+        results = self.collection.get(
+            where={"$and": [{"repo_name": repo_name}, {"file_path": file_path}]}
+        )
+
+        if results["ids"]:
+            self.collection.delete(ids=results["ids"])
+            return len(results["ids"])
+
+        return 0
+
     def reset(self) -> None:
         """Reset the entire collection (for testing)"""
         self.client.delete_collection(name=self.collection_name)

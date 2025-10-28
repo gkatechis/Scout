@@ -221,6 +221,61 @@ class TestEmbeddingStore:
         deleted_count = embedding_store.delete_repo("nonexistent")
         assert deleted_count == 0
 
+    def test_delete_file(self, embedding_store, sample_chunks):
+        """Test deleting chunks for a specific file"""
+        embedding_store.add_chunks(sample_chunks)
+
+        # Delete auth.py file
+        deleted_count = embedding_store.delete_file("test-repo", "auth.py")
+
+        assert deleted_count == 1  # One chunk from auth.py
+
+        # Verify only auth.py chunks were deleted
+        remaining = embedding_store.collection.get(where={"repo_name": "test-repo"})
+        assert len(remaining["ids"]) == 1  # Only user.py remaining
+        remaining_files = {meta["file_path"] for meta in remaining["metadatas"]}
+        assert "auth.py" not in remaining_files
+        assert "user.py" in remaining_files
+
+    def test_delete_file_nonexistent(self, embedding_store):
+        """Test deleting nonexistent file"""
+        deleted_count = embedding_store.delete_file("test-repo", "nonexistent.py")
+        assert deleted_count == 0
+
+    def test_delete_file_with_multiple_chunks(self, embedding_store):
+        """Test deleting file with multiple chunks"""
+        from mcpindexer.chunker import CodeChunk
+
+        # Create multiple chunks for same file
+        chunks = [
+            CodeChunk(
+                chunk_id=f"test:file:chunk{i}",
+                file_path="multi_chunk.py",
+                repo_name="test-repo",
+                language="python",
+                chunk_type="function",
+                code_text=f"def function_{i}(): pass",
+                start_line=i * 10,
+                end_line=i * 10 + 5,
+                symbol_name=f"function_{i}",
+                parent_class=None,
+                imports=[],
+                context_text=f"def function_{i}(): pass",
+                token_count=10,
+            )
+            for i in range(5)
+        ]
+
+        embedding_store.add_chunks(chunks)
+
+        # Delete all chunks for this file
+        deleted_count = embedding_store.delete_file("test-repo", "multi_chunk.py")
+
+        assert deleted_count == 5
+        # Verify all chunks deleted
+        results = embedding_store.collection.get(where={"file_path": "multi_chunk.py"})
+        assert len(results["ids"]) == 0
+
     def test_reset(self, embedding_store, sample_chunks):
         """Test resetting the collection"""
         embedding_store.add_chunks(sample_chunks)
