@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 import chromadb
+import torch
 from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
 
@@ -47,6 +48,7 @@ class EmbeddingStore:
         db_path: str = "./chroma_data",
         collection_name: str = "code_embeddings",
         model_name: Optional[str] = None,
+        device: Optional[str] = None,
     ):
         """
         Initialize embedding store
@@ -56,6 +58,8 @@ class EmbeddingStore:
             collection_name: Name of the collection
             model_name: Optional embedding model name (defaults to
                 MCP_INDEXER_MODEL env var or DEFAULT_MODEL)
+            device: Optional device to use ('cpu', 'cuda', 'mps'). If None,
+                auto-detects based on MCP_INDEXER_DEVICE env var or available hardware.
         """
         self.db_path = db_path
         self.collection_name = collection_name
@@ -63,14 +67,17 @@ class EmbeddingStore:
             "MCP_INDEXER_MODEL", self.DEFAULT_MODEL
         )
 
+        # Determine device to use
+        self.device = self._select_device(device)
+
         # Initialize ChromaDB client
         self.client = chromadb.PersistentClient(
             path=db_path,
             settings=Settings(anonymized_telemetry=False, allow_reset=True),
         )
 
-        # Load embedding model
-        self.model = SentenceTransformer(self.model_name)
+        # Load embedding model with device
+        self.model = SentenceTransformer(self.model_name, device=self.device)
 
         # Get or create collection
         try:
@@ -81,6 +88,33 @@ class EmbeddingStore:
                 name=collection_name,
                 metadata={"description": "Code embeddings for semantic search"},
             )
+
+    def _select_device(self, device: Optional[str] = None) -> str:
+        """
+        Select the best available device for embeddings
+
+        Args:
+            device: Optional device override
+
+        Returns:
+            Device string ('cpu', 'cuda', or 'mps')
+        """
+        # If device explicitly specified, use it
+        if device:
+            return device
+
+        # Check environment variable
+        env_device = os.getenv("MCP_INDEXER_DEVICE")
+        if env_device:
+            return env_device.lower()
+
+        # Auto-detect: prefer GPU if available
+        if torch.cuda.is_available():
+            return "cuda"
+        elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+            return "mps"  # Apple Silicon GPU
+        else:
+            return "cpu"
 
     def add_chunks(self, chunks: List[CodeChunk]) -> None:
         """

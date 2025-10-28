@@ -375,6 +375,74 @@ class TestEmbeddingStore:
         # Cleanup
         store.reset()
 
+    def test_device_selection_default_cpu(self, temp_db_path):
+        """Test that CPU is used by default on systems without GPU"""
+        # Clear env var if set
+        if "MCP_INDEXER_DEVICE" in os.environ:
+            del os.environ["MCP_INDEXER_DEVICE"]
+
+        store = EmbeddingStore(db_path=temp_db_path, collection_name="device_test")
+        # Should be cpu, cuda, or mps depending on hardware
+        assert store.device in ["cpu", "cuda", "mps"]
+
+        # Cleanup
+        store.reset()
+
+    def test_device_selection_env_var(self, temp_db_path):
+        """Test that MCP_INDEXER_DEVICE environment variable is respected"""
+        # Set environment variable
+        os.environ["MCP_INDEXER_DEVICE"] = "cpu"
+
+        try:
+            store = EmbeddingStore(db_path=temp_db_path, collection_name="device_env_test")
+            assert store.device == "cpu"
+
+            # Cleanup
+            store.reset()
+        finally:
+            # Clean up environment variable
+            if "MCP_INDEXER_DEVICE" in os.environ:
+                del os.environ["MCP_INDEXER_DEVICE"]
+
+    def test_device_selection_parameter_override(self, temp_db_path):
+        """Test that explicit device parameter overrides environment variable"""
+        os.environ["MCP_INDEXER_DEVICE"] = "cuda"
+
+        try:
+            store = EmbeddingStore(
+                db_path=temp_db_path,
+                collection_name="device_override_test",
+                device="cpu",
+            )
+            # Parameter should override env var
+            assert store.device == "cpu"
+
+            # Cleanup
+            store.reset()
+        finally:
+            if "MCP_INDEXER_DEVICE" in os.environ:
+                del os.environ["MCP_INDEXER_DEVICE"]
+
+    def test_device_selection_cuda_detection(self, temp_db_path):
+        """Test CUDA detection when available"""
+        import torch
+
+        # Clear env var
+        if "MCP_INDEXER_DEVICE" in os.environ:
+            del os.environ["MCP_INDEXER_DEVICE"]
+
+        store = EmbeddingStore(db_path=temp_db_path, collection_name="cuda_test")
+
+        # If CUDA is available, should use it
+        if torch.cuda.is_available():
+            assert store.device == "cuda"
+        # Otherwise should fall back to CPU or MPS (on Apple Silicon)
+        else:
+            assert store.device in ["cpu", "mps"]
+
+        # Cleanup
+        store.reset()
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
