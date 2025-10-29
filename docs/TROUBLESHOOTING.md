@@ -167,7 +167,7 @@ cd /path/to/repo && .git/hooks/post-merge
 If you're still experiencing issues:
 1. Check debug logs: `~/.scout/logs/scout.log`
 2. Run installation check: `scout check`
-3. Report issues on GitHub: https://github.com/gkatechis/mcpIndexer/issues
+3. Report issues on GitHub: https://github.com/gkatechis/Scout/issues
 
 Include in your report:
 - Output of `scout check`

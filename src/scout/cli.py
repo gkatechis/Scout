@@ -446,7 +446,7 @@ def cmd_recover(args):
 def cmd_init(args):
     """Interactive setup wizard for first-time users"""
     print("======================================")
-    print("  mcpIndexer Interactive Setup")
+    print("  Scout Interactive Setup")
     print("======================================\n")
 
     # Step 1: Verify installation
@@ -456,7 +456,7 @@ def cmd_init(args):
         from scout.embeddings import EmbeddingStore
         from scout.indexer import MultiRepoIndexer
 
-        print("✓ mcpIndexer is installed correctly\n")
+        print("✓ Scout is installed correctly\n")
     except ImportError as e:
         print(f"✗ Installation error: {e}")
         print("Please run setup.sh first or install with: pip install -e .")
@@ -586,8 +586,8 @@ def cmd_init(args):
 
 
 def cmd_check(args):
-    """Verify mcpIndexer installation"""
-    print("mcpIndexer Installation Check\n")
+    """Verify Scout installation"""
+    print("Scout Installation Check\n")
 
     all_ok = True
 

@@ -35,7 +35,7 @@ Tracks imports and dependencies within and across repositories:
 - Suggests missing repositories to add
 
 ### 6. Stack Config (`stack_config.py`)
-Persistent configuration management stored at `~/.mcpindexer/stack.json`:
+Persistent configuration management stored at `~/.scout/stack.json`:
 - Repository metadata (name, path, status)
 - Git commit tracking for incremental updates
 - Auto-reindex settings
@@ -82,7 +82,7 @@ ChromaDB Store
 ### Indexing a Repository
 
 ```
-User: mcpindexer add /path/to/repo
+User: scout add /path/to/repo
     ↓
 CLI validates path and creates RepoIndexer
     ↓
@@ -151,7 +151,7 @@ Each code chunk is stored with:
   - `symbol_type`: function, class, method, etc.
   - `parent_symbol`: Parent class for methods
 
-### Stack Configuration (`~/.mcpindexer/stack.json`)
+### Stack Configuration (`~/.scout/stack.json`)
 
 ```json
 {

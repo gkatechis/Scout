@@ -85,7 +85,7 @@ if [ ! -f "$SCRIPT_DIR/.mcp.json" ]; then
         "$SCRIPT_DIR/src/scout/server.py"
       ],
       "env": {
-        "MCP_INDEXER_DB_PATH": "~/.scout/db"
+        "SCOUT_DB_PATH": "~/.scout/db"
       }
     }
   }
@@ -144,8 +144,8 @@ if [ -n "$SHELL_CONFIG" ]; then
     echo ""
     echo "Environment variables are OPTIONAL for standard usage."
     echo ""
-    echo "Set MCP_INDEXER_DB_PATH only if you want a custom database location:"
-    echo "  export MCP_INDEXER_DB_PATH=~/my-custom-path/db"
+    echo "Set SCOUT_DB_PATH only if you want a custom database location:"
+    echo "  export SCOUT_DB_PATH=~/my-custom-path/db"
     echo ""
     echo "PYTHONPATH is NOT needed since pip install -e was used."
     echo ""

@@ -212,11 +212,11 @@ Enable debug output for troubleshooting:
 
 ## Verbose output (INFO level)
 
-mcpindexer --verbose <command>
+scout --verbose <command>
 
-## Debug output (DEBUG level, saves to ~/.mcpindexer/logs/mcpindexer.log)
+## Debug output (DEBUG level, saves to ~/.scout/logs/scout.log)
 
-mcpindexer --debug <command>
+scout --debug <command>
 
 ```text
 
@@ -225,7 +225,7 @@ mcpindexer --debug <command>
 Test your installation:
 
 ```bash
-mcpindexer check
+scout check
 
 ```text
 

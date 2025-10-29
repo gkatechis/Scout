@@ -38,8 +38,8 @@ Test in an isolated virtual environment:
 ```bash
 # Clone to a fresh directory
 cd /tmp
-git clone https://github.com/yourusername/mcpIndexer.git
-cd mcpIndexer
+git clone https://github.com/yourusername/Scout.git
+cd Scout
 
 # Run setup script
 ./setup.sh
@@ -62,7 +62,7 @@ python3 -m venv test_env
 source test_env/bin/activate
 
 # Install from local directory
-pip install -e /path/to/mcpIndexer
+pip install -e /path/to/Scout
 
 # Test imports
 python3 -c "from scout.indexer import MultiRepoIndexer; print('OK')"
