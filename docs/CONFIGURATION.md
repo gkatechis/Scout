@@ -58,11 +58,11 @@ export SCOUT_DB_PATH=/shared/team/code_indexes
 
 ### PYTHONPATH
 
-**NOT required** if you used `pip install -e .` (recommended).
+**NOT required** if you used the recommended setup (`./setup.sh` or `pip install -e .`).
 
 **Only needed if**:
-- You did NOT use `pip install -e .`
-- You installed with `pip install -r requirements.txt` instead
+- You manually installed dependencies without using `pip install -e .`
+- You're running Scout in development mode without package installation
 
 **Usage**:
 ```bash
@@ -103,7 +103,7 @@ Used by MCP clients (like Claude Code) to connect to the Scout server.
 - `args`: Path to the MCP server script
 - `env.SCOUT_DB_PATH`: Database location
 
-**Note**: PYTHONPATH is not needed if you used `pip install -e .` during setup. If you used `pip install -r requirements.txt` instead, add `"PYTHONPATH": "/absolute/path/to/Scout/src"` to the `env` section.
+**Note**: PYTHONPATH is not needed if you used the recommended setup (`./setup.sh` or `pip install -e .`). Only add PYTHONPATH to the `env` section if you're running Scout without package installation.
 
 ## Stack Configuration
 

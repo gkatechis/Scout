@@ -34,10 +34,9 @@ This guide covers common issues and their solutions when using Scout.
    pip install -e .
    ```
 
-3. **Still having issues?** Install from requirements.txt first:
+3. **Still having issues?** Try installing with dev dependencies:
    ```bash
-   pip install -r requirements.txt
-   pip install -e .
+   pip install -e ".[dev]"
    ```
 
 ### "ModuleNotFoundError: No module named 'tree_sitter'"
@@ -46,7 +45,7 @@ This guide covers common issues and their solutions when using Scout.
 
 ```bash
 source venv/bin/activate
-pip install -r requirements.txt
+pip install -e ".[dev]"
 ```
 
 ## Debug Logging

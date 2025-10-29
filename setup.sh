@@ -47,17 +47,11 @@ source "$SCRIPT_DIR/venv/bin/activate"
 echo "✓ Virtual environment activated"
 echo ""
 
-# Install dependencies
-echo "Installing dependencies..."
+# Install scout with dependencies
+echo "Installing scout and dependencies..."
 pip install --upgrade pip setuptools wheel
-pip install -r "$SCRIPT_DIR/requirements.txt"
-echo "✓ Dependencies installed"
-echo ""
-
-# Install scout as CLI tool
-echo "Installing scout CLI..."
-pip install -e "$SCRIPT_DIR"
-echo "✓ scout CLI installed"
+pip install -e "$SCRIPT_DIR[dev]"
+echo "✓ scout and dependencies installed"
 echo ""
 
 # Verify CLI installation

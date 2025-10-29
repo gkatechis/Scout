@@ -81,7 +81,6 @@ Before releasing to GitHub, verify:
 - [ ] `.mcp.json` is not tracked (only `.mcp.json.example`)
 - [ ] README has generic setup instructions
 - [ ] LICENSE file exists
-- [ ] `requirements.txt` is complete
 - [ ] `pyproject.toml` is configured correctly
 - [ ] Setup script works on clean environment
 - [ ] Documentation is complete
