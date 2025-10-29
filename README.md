@@ -1,4 +1,4 @@
-# MCP Indexer
+# Scout
 
 Semantic code search indexer for AI tools via the Model Context Protocol (MCP).
 
@@ -21,7 +21,7 @@ Semantic code search indexer for AI tools via the Model Context Protocol (MCP).
 
 ## Overview
 
-MCP Indexer provides intelligent code search capabilities to any MCP-compatible LLM (Claude, etc.). It indexes your repositories using semantic embeddings, enabling natural language code search, symbol lookups, and cross-repo dependency analysis.
+Scout provides intelligent code search capabilities to any MCP-compatible LLM (Claude, etc.). It indexes your repositories using semantic embeddings, enabling natural language code search, symbol lookups, and cross-repo dependency analysis.
 
 ## Features
 
@@ -52,8 +52,8 @@ If you need to install or upgrade Python:
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/gkatechis/mcpIndexer.git
-cd mcpIndexer
+git clone https://github.com/gkatechis/Scout.git
+cd Scout
 ```
 
 2. Run the setup script:
@@ -75,14 +75,14 @@ Environment variables are **optional** - setup.sh configures sensible defaults. 
 **Use this method only if:**
 - The automated setup script fails
 - You need custom Python version or dependency management
-- You're integrating mcpIndexer into an existing project
+- You're integrating Scout into an existing project
 
 **Steps:**
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/gkatechis/mcpIndexer.git
-cd mcpIndexer
+git clone https://github.com/gkatechis/Scout.git
+cd Scout
 ```
 
 2. Create and activate a virtual environment:
@@ -98,7 +98,7 @@ pip install -e .
 
 4. Create configuration directory:
 ```bash
-mkdir -p ~/.mcpindexer
+mkdir -p ~/.scout
 ```
 
 5. Configure MCP integration (for Claude Code or other MCP clients):
@@ -127,7 +127,7 @@ You'll need to activate the venv each time you open a new terminal.
 
 The easiest way to get started:
 ```bash
-mcpindexer init
+scout init
 ```
 
 This wizard will:
@@ -140,13 +140,13 @@ This wizard will:
 
 ```bash
 # Add a local repository
-mcpindexer add /path/to/local/repo
+scout add /path/to/local/repo
 
 # Add from GitHub (auto-clones and indexes)
-mcpindexer add https://github.com/user/repo
+scout add https://github.com/user/repo
 
 # Specify a custom name
-mcpindexer add https://github.com/user/repo --name my-custom-name
+scout add https://github.com/user/repo --name my-custom-name
 ```
 
 ### 4. Use with MCP Clients
@@ -157,29 +157,29 @@ Once configured in `.mcp.json`, the MCP server automatically starts when you use
 
 ```bash
 # Getting started
-mcpindexer init                           # Interactive setup wizard
-mcpindexer check                          # Verify installation
+scout init                           # Interactive setup wizard
+scout check                          # Verify installation
 
 # Repository management
-mcpindexer add <path>                     # Add local repository
-mcpindexer add <url>                      # Clone and add from GitHub
-mcpindexer status                         # Show stack status
+scout add <path>                     # Add local repository
+scout add <url>                      # Clone and add from GitHub
+scout status                         # Show stack status
 
 # Keeping repos up to date
-mcpindexer check-updates                  # Check which repos need reindexing
-mcpindexer reindex-changed                # Reindex repos with new commits
+scout check-updates                  # Check which repos need reindexing
+scout reindex-changed                # Reindex repos with new commits
 
 # Recovery and maintenance
-mcpindexer recover                        # Recover from interrupted indexing
+scout recover                        # Recover from interrupted indexing
 
 # Git integration
-mcpindexer install-hook <repo-path>       # Auto-reindex on git pull
+scout install-hook <repo-path>       # Auto-reindex on git pull
 ```
 
 For detailed help on any command:
 ```bash
-mcpindexer --help
-mcpindexer <command> --help
+scout --help
+scout <command> --help
 ```
 
 ## MCP Tools Reference
@@ -224,7 +224,7 @@ The MCP server exposes 13 tools organized by functionality:
 
 ## Configuration
 
-Configuration is stored at `~/.mcpindexer/stack.json` and tracks all indexed repositories with their metadata.
+Configuration is stored at `~/.scout/stack.json` and tracks all indexed repositories with their metadata.
 
 For detailed configuration options including environment variables, custom database locations, and advanced features, see [docs/CONFIGURATION.md](docs/CONFIGURATION.md).
 
@@ -233,9 +233,9 @@ For detailed configuration options including environment variables, custom datab
 For common issues and solutions, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
 
 Quick tips:
-- Enable debug logging: `mcpindexer --debug <command>`
-- Check installation: `mcpindexer check`
-- View logs: `~/.mcpindexer/logs/mcpindexer.log`
+- Enable debug logging: `scout --debug <command>`
+- Check installation: `scout check`
+- View logs: `~/.scout/logs/scout.log`
 
 ## Architecture
 
@@ -272,4 +272,4 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for:
 ## Support
 
 - **Documentation**: See the docs listed at the top of this README
-- **Issues**: Report bugs or request features via [GitHub Issues](https://github.com/gkatechis/mcpIndexer/issues)
+- **Issues**: Report bugs or request features via [GitHub Issues](https://github.com/gkatechis/Scout/issues)

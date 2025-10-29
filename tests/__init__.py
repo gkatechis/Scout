@@ -1,1 +1,1 @@
-# Tests for mcpIndexer
+# Tests for Scout

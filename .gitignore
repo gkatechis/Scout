@@ -46,7 +46,7 @@ Thumbs.db
 .beads/daemon.pid
 
 # Local configuration
-.mcpindexer/
+.scout/
 
 # Project-specific documentation
 ZENDESK_*.md

@@ -1,6 +1,6 @@
-# AI Agent Instructions for MCP Indexer
+# AI Agent Instructions for Scout
 
-This file contains instructions for AI coding agents working on the MCP Indexer project.
+This file contains instructions for AI coding agents working on the Scout project.
 
 ## Task Management with Beads
 
@@ -35,7 +35,7 @@ go install github.com/steveyegge/beads/cmd/bd@latest
 #### 2. Initialize Beads in this project
 
 ```bash
-cd /path/to/mcpIndexer
+cd /path/to/Scout
 bd init
 ```
 
@@ -218,7 +218,7 @@ bd edit <id>                         # Edit issue details
 ## Getting Help
 
 - **Beads documentation**: https://github.com/steveyegge/beads
-- **MCP Indexer issues**: Check `bd list` for current project issues
+- **Scout issues**: Check `bd list` for current project issues
 - **Project README**: See README.md for installation and usage
 
 ## For Human Developers

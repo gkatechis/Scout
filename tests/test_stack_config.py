@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from mcpindexer.stack_config import IndexingStatus, RepoConfig, StackConfig
+from scout.stack_config import IndexingStatus, RepoConfig, StackConfig
 
 
 @pytest.fixture

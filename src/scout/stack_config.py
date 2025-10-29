@@ -85,8 +85,8 @@ class StackConfig:
         if config_path:
             self.config_path = Path(config_path)
         else:
-            # Default to ~/.mcpindexer/stack.json
-            self.config_path = Path.home() / ".mcpindexer" / "stack.json"
+            # Default to ~/.scout/stack.json
+            self.config_path = Path.home() / ".scout" / "stack.json"
 
         self.repos: Dict[str, RepoConfig] = {}
         self.load()

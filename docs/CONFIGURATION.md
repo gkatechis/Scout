@@ -2,15 +2,15 @@
 
 ## Environment Variables
 
-### MCP_INDEXER_DB_PATH
+### SCOUT_DB_PATH
 
-Controls where mcpIndexer stores its database and embeddings.
+Controls where Scout stores its database and embeddings.
 
-**Default**: `~/.mcpindexer/db`
+**Default**: `~/.scout/db`
 
 **Usage**:
 ```bash
-export MCP_INDEXER_DB_PATH=/custom/path/to/db
+export SCOUT_DB_PATH=/custom/path/to/db
 ```
 
 **What it affects**:
@@ -18,7 +18,7 @@ export MCP_INDEXER_DB_PATH=/custom/path/to/db
 - Embedding storage
 - Persistent index data
 
-### MCP_INDEXER_MODEL
+### SCOUT_MODEL
 
 Controls which sentence-transformer model is used for generating code embeddings.
 
@@ -26,7 +26,7 @@ Controls which sentence-transformer model is used for generating code embeddings
 
 **Usage**:
 ```bash
-export MCP_INDEXER_MODEL=sentence-transformers/all-MiniLM-L6-v2
+export SCOUT_MODEL=sentence-transformers/all-MiniLM-L6-v2
 ```
 
 **What it affects**:
@@ -47,13 +47,13 @@ export MCP_INDEXER_MODEL=sentence-transformers/all-MiniLM-L6-v2
 
 ```bash
 # Use default location (recommended)
-export MCP_INDEXER_DB_PATH=~/.mcpindexer/db
+export SCOUT_DB_PATH=~/.scout/db
 
 # Use project-specific location
-export MCP_INDEXER_DB_PATH=./project_indexes
+export SCOUT_DB_PATH=./project_indexes
 
 # Use shared team location
-export MCP_INDEXER_DB_PATH=/shared/team/code_indexes
+export SCOUT_DB_PATH=/shared/team/code_indexes
 ```
 
 ### PYTHONPATH
@@ -66,18 +66,18 @@ export MCP_INDEXER_DB_PATH=/shared/team/code_indexes
 
 **Usage**:
 ```bash
-export PYTHONPATH=/absolute/path/to/mcpIndexer/src
+export PYTHONPATH=/absolute/path/to/Scout/src
 ```
 
 **What it does**:
-- Allows Python to find the `mcpindexer` module when not installed as a package
+- Allows Python to find the `scout` module when not installed as a package
 - Must point to the `src/` directory
 
 ## MCP Configuration
 
 ### .mcp.json
 
-Used by MCP clients (like Claude Code) to connect to the mcpIndexer server.
+Used by MCP clients (like Claude Code) to connect to the Scout server.
 
 **Location**: Project root or Claude Code configuration directory
 
@@ -85,13 +85,13 @@ Used by MCP clients (like Claude Code) to connect to the mcpIndexer server.
 ```json
 {
   "mcpServers": {
-    "mcpindexer": {
-      "command": "/absolute/path/to/mcpIndexer/venv/bin/python3",
+    "scout": {
+      "command": "/absolute/path/to/Scout/venv/bin/python3",
       "args": [
-        "/absolute/path/to/mcpIndexer/src/mcpindexer/server.py"
+        "/absolute/path/to/Scout/src/scout/server.py"
       ],
       "env": {
-        "MCP_INDEXER_DB_PATH": "~/.mcpindexer/db"
+        "SCOUT_DB_PATH": "~/.scout/db"
       }
     }
   }
@@ -101,15 +101,15 @@ Used by MCP clients (like Claude Code) to connect to the mcpIndexer server.
 **Configuration fields**:
 - `command`: Python interpreter from virtual environment (recommended)
 - `args`: Path to the MCP server script
-- `env.MCP_INDEXER_DB_PATH`: Database location
+- `env.SCOUT_DB_PATH`: Database location
 
-**Note**: PYTHONPATH is not needed if you used `pip install -e .` during setup. If you used `pip install -r requirements.txt` instead, add `"PYTHONPATH": "/absolute/path/to/mcpIndexer/src"` to the `env` section.
+**Note**: PYTHONPATH is not needed if you used `pip install -e .` during setup. If you used `pip install -r requirements.txt` instead, add `"PYTHONPATH": "/absolute/path/to/Scout/src"` to the `env` section.
 
 ## Stack Configuration
 
-### ~/.mcpindexer/stack.json
+### ~/.scout/stack.json
 
-Automatically created and maintained by mcpIndexer. Tracks indexed repositories.
+Automatically created and maintained by Scout. Tracks indexed repositories.
 
 **Example**:
 ```json
@@ -144,7 +144,7 @@ Automatically created and maintained by mcpIndexer. Tracks indexed repositories.
 
 ## Dependency Storage
 
-### ~/.mcpindexer/dependencies.json
+### ~/.scout/dependencies.json
 
 Stores cross-repository dependency information.
 
@@ -174,10 +174,10 @@ Stores cross-repository dependency information.
 
 ### Filtering Packages by Organization
 
-You can configure mcpIndexer to only track packages from your organization:
+You can configure Scout to only track packages from your organization:
 
 ```python
-from mcpindexer.dependency_storage import DependencyStorage
+from scout.dependency_storage import DependencyStorage
 
 # Configure organization prefixes
 storage = DependencyStorage(
@@ -199,16 +199,16 @@ This is useful for:
 ### Custom Database Location Per Repository
 
 ```python
-from mcpindexer.embeddings import EmbeddingStore
+from scout.embeddings import EmbeddingStore
 
 # Different databases for different projects
 frontend_store = EmbeddingStore(
-    db_path="~/.mcpindexer/frontend_db",
+    db_path="~/.scout/frontend_db",
     collection_name="frontend_index"
 )
 
 backend_store = EmbeddingStore(
-    db_path="~/.mcpindexer/backend_db",
+    db_path="~/.scout/backend_db",
     collection_name="backend_index"
 )
 ```
@@ -248,14 +248,14 @@ result = indexer.index(file_filter=my_filter)
 **Problem**: Can't find database or indices
 
 **Solutions**:
-1. Check `MCP_INDEXER_DB_PATH` is set correctly
+1. Check `SCOUT_DB_PATH` is set correctly
 2. Ensure path has write permissions
 3. Use absolute paths, not relative
 4. Expand `~` to full home directory path
 
 ### PYTHONPATH Issues
 
-**Problem**: `ModuleNotFoundError: No module named 'mcpindexer'`
+**Problem**: `ModuleNotFoundError: No module named 'scout'`
 
 **Solutions**:
 1. Verify PYTHONPATH includes the `src/` directory
@@ -270,11 +270,11 @@ result = indexer.index(file_filter=my_filter)
 **Solutions**:
 ```bash
 # Check permissions
-ls -la ~/.mcpindexer/
+ls -la ~/.scout/
 
 # Fix permissions
-chmod 755 ~/.mcpindexer/
-chmod 644 ~/.mcpindexer/*.json
+chmod 755 ~/.scout/
+chmod 644 ~/.scout/*.json
 ```
 
 ## Best Practices
@@ -282,6 +282,6 @@ chmod 644 ~/.mcpindexer/*.json
 1. **Use the default database location** unless you have a specific reason not to
 2. **Set environment variables in your shell profile** (`.bashrc`, `.zshrc`) for persistence
 3. **Use absolute paths** in all configuration files
-4. **Back up `~/.mcpindexer/`** directory if you have large indices
+4. **Back up `~/.scout/`** directory if you have large indices
 5. **One database per development environment** (work, personal, etc.)
 6. **Configure organization prefixes** to reduce noise from external dependencies

@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from mcpindexer.embeddings import EmbeddingStore
-from mcpindexer.indexer import IndexingResult, MultiRepoIndexer, RepoIndexer
+from scout.embeddings import EmbeddingStore
+from scout.indexer import IndexingResult, MultiRepoIndexer, RepoIndexer
 
 
 @pytest.fixture

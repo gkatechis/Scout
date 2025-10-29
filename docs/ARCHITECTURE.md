@@ -1,6 +1,6 @@
 # Architecture
 
-This document describes the internal architecture of MCP Indexer.
+This document describes the internal architecture of Scout.
 
 ## Components
 
@@ -172,7 +172,7 @@ Each code chunk is stored with:
 
 ## Incremental Updates
 
-MCP Indexer tracks git commits to enable incremental reindexing:
+Scout tracks git commits to enable incremental reindexing:
 
 1. **Commit Tracking**: Stores last indexed commit hash in stack.json
 2. **Change Detection**: Compares current HEAD with stored commit

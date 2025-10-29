@@ -4,7 +4,7 @@ Tests for the multi-language code parser
 
 import pytest
 
-from mcpindexer.parser import CodeParser, LanguageType
+from scout.parser import CodeParser, LanguageType
 
 # Test code samples for each language
 PYTHON_CODE = """

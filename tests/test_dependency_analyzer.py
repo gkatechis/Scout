@@ -4,13 +4,13 @@ Tests for dependency analyzer
 
 import pytest
 
-from mcpindexer.dependency_analyzer import (
+from scout.dependency_analyzer import (
     CrossRepoAnalyzer,
     Dependency,
     DependencyAnalyzer,
     DependencyGraph,
 )
-from mcpindexer.parser import CodeParser
+from scout.parser import CodeParser
 
 # Sample code files for testing
 SAMPLE_AUTH_CODE = """

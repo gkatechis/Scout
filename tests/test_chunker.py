@@ -4,8 +4,8 @@ Tests for the code chunking strategy
 
 import pytest
 
-from mcpindexer.chunker import CodeChunk, CodeChunker
-from mcpindexer.parser import CodeParser
+from scout.chunker import CodeChunk, CodeChunker
+from scout.parser import CodeParser
 
 # Test code samples
 SMALL_PYTHON_CODE = """

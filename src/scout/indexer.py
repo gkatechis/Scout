@@ -11,12 +11,12 @@ from typing import Dict, List, Optional, Set
 
 import git
 
-from mcpindexer.chunker import CodeChunk, CodeChunker
-from mcpindexer.dependency_analyzer import CrossRepoAnalyzer, DependencyAnalyzer
-from mcpindexer.dependency_storage import DependencyStorage
-from mcpindexer.embeddings import EmbeddingStore
-from mcpindexer.parser import CodeParser
-from mcpindexer.stack_config import IndexingStatus, StackConfig
+from scout.chunker import CodeChunk, CodeChunker
+from scout.dependency_analyzer import CrossRepoAnalyzer, DependencyAnalyzer
+from scout.dependency_storage import DependencyStorage
+from scout.embeddings import EmbeddingStore
+from scout.parser import CodeParser
+from scout.stack_config import IndexingStatus, StackConfig
 
 
 @dataclass

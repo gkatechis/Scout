@@ -22,13 +22,13 @@ RUN chmod +x setup.sh
 RUN ./setup.sh
 
 # Test installation
-CMD ["python3", "-m", "mcpindexer", "check"]
+CMD ["python3", "-m", "scout", "check"]
 ```
 
 Build and run:
 ```bash
-docker build -t mcpindexer-test .
-docker run mcpindexer-test
+docker build -t scout-test .
+docker run scout-test
 ```
 
 ### Option 2: Using Python venv
@@ -48,8 +48,8 @@ cd mcpIndexer
 source venv/bin/activate
 
 # Test CLI commands
-python3 -m mcpindexer check
-python3 -m mcpindexer --help
+python3 -m scout check
+python3 -m scout --help
 ```
 
 ### Option 3: Using pip install
@@ -65,10 +65,10 @@ source test_env/bin/activate
 pip install -e /path/to/mcpIndexer
 
 # Test imports
-python3 -c "from mcpindexer.indexer import MultiRepoIndexer; print('OK')"
+python3 -c "from scout.indexer import MultiRepoIndexer; print('OK')"
 
 # Test CLI
-python3 -m mcpindexer check
+python3 -m scout check
 ```
 
 ## Pre-Release Checklist
@@ -97,7 +97,7 @@ pytest tests/ -v
 # No PYTHONPATH export needed! pytest is configured in pyproject.toml
 
 # With coverage
-pytest tests/ --cov=mcpindexer --cov-report=html
+pytest tests/ --cov=scout --cov-report=html
 
 # Specific test file
 pytest tests/test_embeddings.py -v
@@ -130,9 +130,9 @@ pytest tests/test_embeddings.py -v
 - [ ] Error messages are clear
 
 ### 5. CLI Commands
-- [ ] `python3 -m mcpindexer status` works
-- [ ] `python3 -m mcpindexer check-updates` works
-- [ ] `python3 -m mcpindexer reindex-changed` works
+- [ ] `python3 -m scout status` works
+- [ ] `python3 -m scout check-updates` works
+- [ ] `python3 -m scout reindex-changed` works
 
 ## Performance Testing
 

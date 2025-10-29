@@ -1,10 +1,10 @@
 #!/bin/bash
-# Quick-start setup script for mcpIndexer
+# Quick-start setup script for Scout
 
 set -e
 
 echo "========================================"
-echo "  mcpIndexer Setup"
+echo "  Scout Setup"
 echo "========================================"
 echo ""
 
@@ -54,22 +54,22 @@ pip install -r "$SCRIPT_DIR/requirements.txt"
 echo "✓ Dependencies installed"
 echo ""
 
-# Install mcpindexer as CLI tool
-echo "Installing mcpindexer CLI..."
+# Install scout as CLI tool
+echo "Installing scout CLI..."
 pip install -e "$SCRIPT_DIR"
-echo "✓ mcpindexer CLI installed"
+echo "✓ scout CLI installed"
 echo ""
 
 # Verify CLI installation
 echo "Verifying CLI installation..."
-if "$SCRIPT_DIR/venv/bin/python3" -m mcpindexer --help > /dev/null 2>&1; then
-    echo "✓ CLI verified - 'mcpindexer' command is available"
-    if "$SCRIPT_DIR/venv/bin/mcpindexer" --version > /dev/null 2>&1; then
-        echo "✓ Direct command works: mcpindexer --help"
+if "$SCRIPT_DIR/venv/bin/python3" -m scout --help > /dev/null 2>&1; then
+    echo "✓ CLI verified - 'scout' command is available"
+    if "$SCRIPT_DIR/venv/bin/scout" --version > /dev/null 2>&1; then
+        echo "✓ Direct command works: scout --help"
     fi
 else
     echo "⚠ Warning: CLI verification failed"
-    echo "  Try: source venv/bin/activate && python3 -m mcpindexer --help"
+    echo "  Try: source venv/bin/activate && python3 -m scout --help"
 fi
 echo ""
 
@@ -79,13 +79,13 @@ if [ ! -f "$SCRIPT_DIR/.mcp.json" ]; then
     cat > "$SCRIPT_DIR/.mcp.json" <<EOF
 {
   "mcpServers": {
-    "mcpindexer": {
+    "scout": {
       "command": "$SCRIPT_DIR/venv/bin/python3",
       "args": [
-        "$SCRIPT_DIR/src/mcpindexer/server.py"
+        "$SCRIPT_DIR/src/scout/server.py"
       ],
       "env": {
-        "MCP_INDEXER_DB_PATH": "~/.mcpindexer/db"
+        "MCP_INDEXER_DB_PATH": "~/.scout/db"
       }
     }
   }
@@ -97,10 +97,10 @@ else
 fi
 echo ""
 
-# Create .mcpindexer directory
+# Create .scout directory
 echo "Creating configuration directory..."
-mkdir -p ~/.mcpindexer
-echo "✓ Created ~/.mcpindexer"
+mkdir -p ~/.scout
+echo "✓ Created ~/.scout"
 echo ""
 
 # Create shell profile additions
@@ -119,21 +119,21 @@ if [ -n "$SHELL_CONFIG" ]; then
     echo "========================================"
     echo ""
     echo "Would you like to add a shell alias for easy venv activation?"
-    echo "This will add 'mcpindexer-shell' command to $SHELL_CONFIG"
+    echo "This will add 'scout-shell' command to $SHELL_CONFIG"
     echo ""
     read -p "Add shell alias? (y/n) " -n 1 -r
     echo ""
     if [[ $REPLY =~ ^[Yy]$ ]]; then
-        ALIAS_LINE="alias mcpindexer-shell='source $SCRIPT_DIR/venv/bin/activate'"
+        ALIAS_LINE="alias scout-shell='source $SCRIPT_DIR/venv/bin/activate'"
 
         # Check if alias already exists
-        if grep -q "mcpindexer-shell" "$SHELL_CONFIG" 2>/dev/null; then
+        if grep -q "scout-shell" "$SHELL_CONFIG" 2>/dev/null; then
             echo "⚠ Alias already exists in $SHELL_CONFIG"
         else
             echo "" >> "$SHELL_CONFIG"
-            echo "# mcpIndexer virtual environment activation" >> "$SHELL_CONFIG"
+            echo "# Scout virtual environment activation" >> "$SHELL_CONFIG"
             echo "$ALIAS_LINE" >> "$SHELL_CONFIG"
-            echo "✓ Added 'mcpindexer-shell' alias to $SHELL_CONFIG"
+            echo "✓ Added 'scout-shell' alias to $SHELL_CONFIG"
             echo ""
             echo "To use immediately, run: source $SHELL_CONFIG"
             echo "Or restart your terminal"
@@ -155,14 +155,14 @@ echo "========================================"
 echo "  Setup Complete!"
 echo "========================================"
 echo ""
-if grep -q "mcpindexer-shell" "$SHELL_CONFIG" 2>/dev/null; then
-    echo "To use mcpindexer, activate the virtual environment with:"
-    echo "  mcpindexer-shell"
+if grep -q "scout-shell" "$SHELL_CONFIG" 2>/dev/null; then
+    echo "To use scout, activate the virtual environment with:"
+    echo "  scout-shell"
     echo ""
     echo "Or manually:"
     echo "  source $SCRIPT_DIR/venv/bin/activate"
 else
-    echo "To use mcpindexer, activate the virtual environment:"
+    echo "To use scout, activate the virtual environment:"
     echo "  source $SCRIPT_DIR/venv/bin/activate"
 fi
 echo ""
@@ -174,13 +174,13 @@ echo "Running installation check..."
 echo ""
 
 # Run verification check
-if mcpindexer check; then
+if scout check; then
     echo ""
     echo "✓ Installation verified successfully!"
 else
     echo ""
     echo "⚠ Warning: Installation verification failed"
-    echo "You may need to troubleshoot before using mcpindexer"
+    echo "You may need to troubleshoot before using scout"
 fi
 
 echo ""
@@ -190,10 +190,10 @@ echo "1. Try the demo:"
 echo "   python3 examples/demo.py"
 echo ""
 echo "2. Index your first repository:"
-echo "   mcpindexer add /path/to/your/repo --name repo-name"
+echo "   scout add /path/to/your/repo --name repo-name"
 echo ""
 echo "3. Check status:"
-echo "   mcpindexer status"
+echo "   scout status"
 echo ""
 echo "4. Configure your MCP client (e.g., Claude Code):"
 echo "   A ready-to-use .mcp.json has been created at:"
@@ -202,7 +202,7 @@ echo ""
 echo "   For Claude Code, copy this configuration to:"
 echo "   ~/.claude/claude_desktop_config.json"
 echo ""
-echo "   Or merge the 'mcpindexer' server block into your existing config"
+echo "   Or merge the 'scout' server block into your existing config"
 echo ""
 echo "For detailed usage, see README.md"
 echo ""

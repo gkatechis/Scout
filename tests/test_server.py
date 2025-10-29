@@ -4,14 +4,14 @@ Tests for the MCP server skeleton
 
 import pytest
 
-from mcpindexer.server import app, call_tool, list_tools
+from scout.server import app, call_tool, list_tools
 
 
 @pytest.mark.asyncio
 async def test_server_initialization():
     """Test that the MCP server initializes correctly"""
     assert app is not None
-    assert app.name == "mcpindexer"
+    assert app.name == "scout"
 
 
 @pytest.mark.asyncio

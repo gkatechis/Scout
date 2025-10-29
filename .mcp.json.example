@@ -1,13 +1,13 @@
 {
   "mcpServers": {
-    "mcpindexer": {
-      "command": "/absolute/path/to/mcpIndexer/venv/bin/python3",
+    "scout": {
+      "command": "/absolute/path/to/Scout/venv/bin/python3",
       "args": [
-        "/absolute/path/to/mcpIndexer/src/mcpindexer/server.py"
+        "/absolute/path/to/Scout/src/scout/server.py"
       ],
       "env": {
-        "MCP_INDEXER_DB_PATH": "~/.mcpindexer/db",
-        "MCP_INDEXER_MODEL": "sentence-transformers/multi-qa-mpnet-base-dot-v1"
+        "SCOUT_DB_PATH": "~/.scout/db",
+        "SCOUT_MODEL": "sentence-transformers/multi-qa-mpnet-base-dot-v1"
       }
     }
   }
@@ -17,15 +17,15 @@
 // a .mcp.json with the correct paths for your system.
 //
 // If you need to create this manually, replace:
-//   - /absolute/path/to/mcpIndexer  →  actual path from: pwd
+//   - /absolute/path/to/Scout  →  actual path from: pwd
 //   - python3                       →  venv python: /path/to/venv/bin/python3
 //
 // To get your actual path, run:
-//   cd mcpIndexer && pwd
+//   cd Scout && pwd
 //
 // Environment variables (optional):
-//   - MCP_INDEXER_DB_PATH: Database location (default: ~/.mcpindexer/db)
-//   - MCP_INDEXER_MODEL: Embedding model (default: multi-qa-mpnet-base-dot-v1)
+//   - SCOUT_DB_PATH: Database location (default: ~/.scout/db)
+//   - SCOUT_MODEL: Embedding model (default: multi-qa-mpnet-base-dot-v1)
 //     Alternative models: all-MiniLM-L6-v2 (good balance), all-mpnet-base-v2 (best quality)
 //
 // Note: PYTHONPATH is NOT included because pip install -e . makes it unnecessary

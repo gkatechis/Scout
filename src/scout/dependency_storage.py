@@ -28,8 +28,8 @@ class DependencyStorage:
         if storage_path:
             self.storage_path = Path(storage_path)
         else:
-            # Default to ~/.mcpindexer/dependencies.json
-            self.storage_path = Path.home() / ".mcpindexer" / "dependencies.json"
+            # Default to ~/.scout/dependencies.json
+            self.storage_path = Path.home() / ".scout" / "dependencies.json"
 
         self.org_prefixes = org_prefixes or []
         self.dependencies: Dict[str, Dict] = {}

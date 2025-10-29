@@ -13,8 +13,8 @@ from typing import Any, Optional
 from mcp.server import Server
 from mcp.types import TextContent, Tool
 
-from mcpindexer.embeddings import EmbeddingStore
-from mcpindexer.indexer import MultiRepoIndexer
+from scout.embeddings import EmbeddingStore
+from scout.indexer import MultiRepoIndexer
 
 # Global state for the server
 _multi_indexer: Optional[MultiRepoIndexer] = None
@@ -28,10 +28,10 @@ def get_indexer() -> MultiRepoIndexer:
     if _multi_indexer is None:
         # Initialize embedding store
         db_path = os.getenv(
-            "MCP_INDEXER_DB_PATH", os.path.expanduser("~/.mcpindexer/db")
+            "SCOUT_DB_PATH", os.path.expanduser("~/.scout/db")
         )
         _embedding_store = EmbeddingStore(
-            db_path=db_path, collection_name="mcp_code_index"
+            db_path=db_path, collection_name="scout_code_index"
         )
         _multi_indexer = MultiRepoIndexer(embedding_store=_embedding_store)
 
@@ -39,7 +39,7 @@ def get_indexer() -> MultiRepoIndexer:
 
 
 # Initialize MCP server
-app = Server("mcpindexer")
+app = Server("scout")
 
 
 @app.list_tools()

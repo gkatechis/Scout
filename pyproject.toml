@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mcpindexer"
+name = "scout"
 version = "0.1.0"
 description = "Semantic code search indexer for multiple repositories via MCP"
 readme = "README.md"
@@ -38,13 +38,13 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/gkatechis/mcpIndexer"
-Repository = "https://github.com/gkatechis/mcpIndexer"
-Issues = "https://github.com/gkatechis/mcpIndexer/issues"
-Documentation = "https://github.com/gkatechis/mcpIndexer/blob/master/README.md"
+Homepage = "https://github.com/gkatechis/Scout"
+Repository = "https://github.com/gkatechis/Scout"
+Issues = "https://github.com/gkatechis/Scout/issues"
+Documentation = "https://github.com/gkatechis/Scout/blob/master/README.md"
 
 [project.scripts]
-mcpindexer = "mcpindexer.cli:main"
+scout = "scout.cli:main"
 
 [project.optional-dependencies]
 dev = [

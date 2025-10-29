@@ -8,7 +8,7 @@ target chunk size of ~200-300 tokens. Adds context metadata.
 from dataclasses import dataclass
 from typing import List, Optional
 
-from mcpindexer.parser import CodeSymbol, ParsedFile
+from scout.parser import CodeSymbol, ParsedFile
 
 
 @dataclass

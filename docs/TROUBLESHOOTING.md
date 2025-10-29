@@ -1,13 +1,13 @@
 # Troubleshooting Guide
 
-This guide covers common issues and their solutions when using MCP Indexer.
+This guide covers common issues and their solutions when using Scout.
 
 ## Installation Issues
 
 ### Python version conflicts or dependency errors
 
 **Symptoms**:
-- "ModuleNotFoundError" when running mcpindexer
+- "ModuleNotFoundError" when running scout
 - "version conflict" errors during installation
 - Dependencies fail to install
 
@@ -55,13 +55,13 @@ For troubleshooting issues, you can enable debug logging with the `--debug` or `
 
 ```bash
 # Enable verbose output (INFO level logging)
-mcpindexer --verbose <command>
+scout --verbose <command>
 
 # Enable debug output (DEBUG level logging, saves to file)
-mcpindexer --debug <command>
+scout --debug <command>
 ```
 
-Debug logs are written to: `~/.mcpindexer/logs/mcpindexer.log`
+Debug logs are written to: `~/.scout/logs/scout.log`
 
 This is helpful when:
 - Investigating indexing failures
@@ -91,10 +91,10 @@ This is helpful when:
 **Solutions**:
 ```bash
 # Check for stuck repositories
-mcpindexer status
+scout status
 
 # Recover automatically
-mcpindexer recover
+scout recover
 ```
 
 ### Out of memory
@@ -129,16 +129,16 @@ mcpindexer recover
 ```bash
 # Force reindex specific repo
 python3 -c "
-from mcpindexer.indexer import MultiRepoIndexer, EmbeddingStore
+from scout.indexer import MultiRepoIndexer, EmbeddingStore
 import os
-db_path = os.path.expanduser('~/.mcpindexer/db')
+db_path = os.path.expanduser('~/.scout/db')
 store = EmbeddingStore(db_path, 'mcp_code_index')
 indexer = MultiRepoIndexer(store)
 indexer.repo_indexers['my-repo'].reindex(force=True)
 "
 
 # Or use CLI
-mcpindexer reindex-changed
+scout reindex-changed
 ```
 
 ## Git Integration Issues
@@ -165,11 +165,11 @@ cd /path/to/repo && .git/hooks/post-merge
 ## Getting Help
 
 If you're still experiencing issues:
-1. Check debug logs: `~/.mcpindexer/logs/mcpindexer.log`
-2. Run installation check: `mcpindexer check`
+1. Check debug logs: `~/.scout/logs/scout.log`
+2. Run installation check: `scout check`
 3. Report issues on GitHub: https://github.com/gkatechis/mcpIndexer/issues
 
 Include in your report:
-- Output of `mcpindexer check`
+- Output of `scout check`
 - Relevant log excerpts
 - Steps to reproduce the issue

@@ -1,14 +1,14 @@
-# Contributing to MCP Indexer
+# Contributing to Scout
 
-Thank you for your interest in contributing to MCP Indexer! This document provides guidelines for contributing to the project.
+Thank you for your interest in contributing to Scout! This document provides guidelines for contributing to the project.
 
 ## Development Setup
 
 1. **Fork and clone the repository**:
 
    ```bash
-   git clone <<<https://github.com/yourusername/mcpIndexer.git>>>
-   cd mcpIndexer
+   git clone <<<https://github.com/yourusername/Scout.git>>>
+   cd Scout
 
 ```text
 
@@ -251,4 +251,4 @@ For AI agents working on this project, we use [Beads](https://github.com/steveye
 
 ## License
 
-By contributing to MCP Indexer, you agree that your contributions will be licensed under the same license as the project.
+By contributing to Scout, you agree that your contributions will be licensed under the same license as the project.

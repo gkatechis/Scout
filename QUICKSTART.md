@@ -1,8 +1,8 @@
 # Quick Start Guide
 
-Get mcpIndexer running in under 5 minutes.
+Get Scout running in under 5 minutes.
 
-## What is mcpIndexer
+## What is Scout
 
 Semantic code search for AI tools via MCP (Model Context Protocol). Index your code repositories and search them using natural language queries in Claude Code or other MCP clients.
 
@@ -12,8 +12,8 @@ Semantic code search for AI tools via MCP (Model Context Protocol). Index your c
 
 ## Clone and run setup
 
-git clone <<<https://github.com/gkatechis/mcpIndexer.git>>>
-cd mcpIndexer
+git clone <<<https://github.com/gkatechis/Scout.git>>>
+cd Scout
 ./setup.sh
 
 ```text
@@ -32,21 +32,21 @@ The setup script will:
 
 ```bash
 
-## Activate the environment (if not using mcpindexer-shell alias)
+## Activate the environment (if not using scout-shell alias)
 
 source venv/bin/activate
 
 ## Index your first repository
 
-mcpindexer add /path/to/your/repo --name my-repo
+scout add /path/to/your/repo --name my-repo
 
 ## Check what's indexed
 
-mcpindexer status
+scout status
 
 ## Verify everything works
 
-mcpindexer check
+scout check
 
 ```text
 
@@ -59,7 +59,7 @@ mcpindexer check
 
 ```text
 
-2. Add the `mcpindexer` server block to your Claude Code config:
+2. Add the `scout` server block to your Claude Code config:
 
    - Location: `~/.claude/claude_desktop_config.json`
 
@@ -91,22 +91,22 @@ mcpindexer check
 
 - Check the [Installation section in README.md](README.md#installation)
 
-### Can't find mcpindexer command
+### Can't find scout command
 
 - Activate the virtual environment: `source venv/bin/activate`
 
-- Or use the alias (if added during setup): `mcpindexer-shell`
+- Or use the alias (if added during setup): `scout-shell`
 
 ### MCP not working in Claude Code
 
 - Verify config path: `~/.claude/claude_desktop_config.json`
 
-- Check logs: `mcpindexer --debug check`
+- Check logs: `scout --debug check`
 
 - See [Configuration docs](docs/CONFIGURATION.md)
 
 ## Getting Help
 
-- Issues: [GitHub Issues](https://github.com/gkatechis/mcpIndexer/issues)
+- Issues: [GitHub Issues](https://github.com/gkatechis/Scout/issues)
 
 - Documentation: [README.md](README.md)

@@ -13,7 +13,7 @@ import chromadb
 from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
 
-from mcpindexer.chunker import CodeChunk
+from scout.chunker import CodeChunk
 
 
 @dataclass
@@ -55,12 +55,12 @@ class EmbeddingStore:
             db_path: Path to ChromaDB storage directory
             collection_name: Name of the collection
             model_name: Optional embedding model name (defaults to
-                MCP_INDEXER_MODEL env var or DEFAULT_MODEL)
+                SCOUT_MODEL env var or DEFAULT_MODEL)
         """
         self.db_path = db_path
         self.collection_name = collection_name
         self.model_name = model_name or os.getenv(
-            "MCP_INDEXER_MODEL", self.DEFAULT_MODEL
+            "SCOUT_MODEL", self.DEFAULT_MODEL
         )
 
         # Initialize ChromaDB client

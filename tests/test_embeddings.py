@@ -8,8 +8,8 @@ import tempfile
 
 import pytest
 
-from mcpindexer.chunker import CodeChunk
-from mcpindexer.embeddings import EmbeddingStore, SearchResult
+from scout.chunker import CodeChunk
+from scout.embeddings import EmbeddingStore, SearchResult
 
 
 @pytest.fixture
@@ -244,7 +244,7 @@ class TestEmbeddingStore:
 
     def test_delete_file_with_multiple_chunks(self, embedding_store):
         """Test deleting file with multiple chunks"""
-        from mcpindexer.chunker import CodeChunk
+        from scout.chunker import CodeChunk
 
         # Create multiple chunks for same file
         chunks = [
@@ -326,9 +326,9 @@ class TestEmbeddingStore:
         store2.reset()
 
     def test_model_selection_env_var(self, temp_db_path):
-        """Test that MCP_INDEXER_MODEL environment variable is respected"""
+        """Test that SCOUT_MODEL environment variable is respected"""
         # Set environment variable
-        os.environ["MCP_INDEXER_MODEL"] = "sentence-transformers/all-MiniLM-L6-v2"
+        os.environ["SCOUT_MODEL"] = "sentence-transformers/all-MiniLM-L6-v2"
 
         try:
             store = EmbeddingStore(db_path=temp_db_path, collection_name="model_test")
@@ -338,12 +338,12 @@ class TestEmbeddingStore:
             store.reset()
         finally:
             # Clean up environment variable
-            if "MCP_INDEXER_MODEL" in os.environ:
-                del os.environ["MCP_INDEXER_MODEL"]
+            if "SCOUT_MODEL" in os.environ:
+                del os.environ["SCOUT_MODEL"]
 
     def test_model_selection_parameter_override(self, temp_db_path):
         """Test that explicit model_name parameter overrides environment variable"""
-        os.environ["MCP_INDEXER_MODEL"] = "sentence-transformers/all-MiniLM-L6-v2"
+        os.environ["SCOUT_MODEL"] = "sentence-transformers/all-MiniLM-L6-v2"
 
         try:
             store = EmbeddingStore(
@@ -357,14 +357,14 @@ class TestEmbeddingStore:
             # Cleanup
             store.reset()
         finally:
-            if "MCP_INDEXER_MODEL" in os.environ:
-                del os.environ["MCP_INDEXER_MODEL"]
+            if "SCOUT_MODEL" in os.environ:
+                del os.environ["SCOUT_MODEL"]
 
     def test_default_model_selection(self, temp_db_path):
         """Test that default model is used when no override specified"""
         # Clear env var if set
-        if "MCP_INDEXER_MODEL" in os.environ:
-            del os.environ["MCP_INDEXER_MODEL"]
+        if "SCOUT_MODEL" in os.environ:
+            del os.environ["SCOUT_MODEL"]
 
         store = EmbeddingStore(db_path=temp_db_path, collection_name="default_test")
         # Should use the new default

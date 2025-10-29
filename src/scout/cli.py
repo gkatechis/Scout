@@ -1,5 +1,5 @@
 """
-CLI for MCP Indexer
+CLI for Scout
 
 Provides commands for managing the repository stack and triggering reindexing.
 """
@@ -12,9 +12,9 @@ import subprocess
 import sys
 from pathlib import Path
 
-from mcpindexer.embeddings import EmbeddingStore
-from mcpindexer.indexer import MultiRepoIndexer, RepoIndexer
-from mcpindexer.stack_config import IndexingStatus, StackConfig
+from scout.embeddings import EmbeddingStore
+from scout.indexer import MultiRepoIndexer, RepoIndexer
+from scout.stack_config import IndexingStatus, StackConfig
 
 # Global logger
 logger = logging.getLogger(__name__)
@@ -39,9 +39,9 @@ def setup_logging(verbose=False, debug=False):
 
     # Also log to file if debug mode
     if debug:
-        log_dir = os.path.expanduser("~/.mcpindexer/logs")
+        log_dir = os.path.expanduser("~/.scout/logs")
         os.makedirs(log_dir, exist_ok=True)
-        log_file = os.path.join(log_dir, "mcpindexer.log")
+        log_file = os.path.join(log_dir, "scout.log")
         file_handler = logging.FileHandler(log_file)
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(logging.Formatter(log_format))
@@ -51,8 +51,8 @@ def setup_logging(verbose=False, debug=False):
 
 def get_indexer():
     """Get or create the multi-repo indexer"""
-    db_path = os.getenv("MCP_INDEXER_DB_PATH", os.path.expanduser("~/.mcpindexer/db"))
-    embedding_store = EmbeddingStore(db_path=db_path, collection_name="mcp_code_index")
+    db_path = os.getenv("SCOUT_DB_PATH", os.path.expanduser("~/.scout/db"))
+    embedding_store = EmbeddingStore(db_path=db_path, collection_name="scout_code_index")
     return MultiRepoIndexer(embedding_store=embedding_store)
 
 
@@ -83,7 +83,7 @@ def cmd_add(args):
                     "Error: Could not extract repo name from URL. Please provide --name"
                 )
                 print("\nExample:")
-                print(f"  mcpindexer add {source} --name my-repo-name")
+                print(f"  scout add {source} --name my-repo-name")
                 return 1
 
         # Clone the repository
@@ -177,8 +177,8 @@ def cmd_add(args):
         print("  - Ensure repository path exists and is readable")
         print("  - Check disk space (indexing creates embeddings)")
         print("  - For git repos: verify git is installed")
-        print("  - Try: mcpindexer check  # Verify installation")
-        print("  - Check logs for more details: ~/.mcpindexer/logs/mcpindexer.log")
+        print("  - Try: scout check  # Verify installation")
+        print("  - Check logs for more details: ~/.scout/logs/scout.log")
         print("  - Run with --debug flag for detailed logging")
         return 1
 
@@ -316,7 +316,7 @@ def cmd_install_hook(args):
 # Automatically reindex when pulling changes
 
 echo "Checking for indexing updates..."
-python3 -m mcpindexer.cli reindex-changed
+python3 -m scout.cli reindex-changed
 
 exit 0
 """
@@ -357,7 +357,7 @@ def cmd_status(args):
         for repo in stuck_repos:
             print(f"    - {repo.name}")
         print("\n  These may have been interrupted. To recover:")
-        print("    mcpindexer recover")
+        print("    scout recover")
 
     return 0
 
@@ -391,7 +391,7 @@ def cmd_recover(args):
         ).lower()
         if response != "y":
             print("\nCancelled. To force recovery without prompt:")
-            print("  mcpindexer recover --force")
+            print("  scout recover --force")
             return 0
 
     print("\nRecovering repositories...\n")
@@ -453,8 +453,8 @@ def cmd_init(args):
     print("Step 1: Verifying installation...\n")
 
     try:
-        from mcpindexer.embeddings import EmbeddingStore
-        from mcpindexer.indexer import MultiRepoIndexer
+        from scout.embeddings import EmbeddingStore
+        from scout.indexer import MultiRepoIndexer
 
         print("✓ mcpIndexer is installed correctly\n")
     except ImportError as e:
@@ -474,7 +474,7 @@ def cmd_init(args):
 
         response = input("Would you like to add another repository? (y/n): ").lower()
         if response != "y":
-            print("\nGreat! You're all set. Run 'mcpindexer status' to see your repos.")
+            print("\nGreat! You're all set. Run 'scout status' to see your repos.")
             return 0
         print()
     else:
@@ -492,8 +492,8 @@ def cmd_init(args):
 
     if choice == "3":
         print("\nNo problem! You can add repositories later with:")
-        print("  mcpindexer add /path/to/repo")
-        print("  mcpindexer add https://github.com/user/repo")
+        print("  scout add /path/to/repo")
+        print("  scout add https://github.com/user/repo")
         return 0
 
     repo_source = None
@@ -533,7 +533,7 @@ def cmd_init(args):
 
     if result != 0:
         print("\nFailed to add repository. Please try manually with:")
-        print(f"  mcpindexer add {repo_source}")
+        print(f"  scout add {repo_source}")
         return 1
 
     # Step 4: Demo search (optional)
@@ -572,14 +572,14 @@ def cmd_init(args):
     print("======================================\n")
     print("Next steps:\n")
     print("1. Check your stack status:")
-    print("   mcpindexer status\n")
+    print("   scout status\n")
     print("2. Add more repositories:")
-    print("   mcpindexer add /path/to/repo\n")
+    print("   scout add /path/to/repo\n")
     print("3. Search your code:")
     print("   Use the MCP tools with your AI assistant\n")
     print("4. Set up git hooks for auto-reindexing:")
-    print("   mcpindexer install-hook /path/to/repo\n")
-    print("For more help: mcpindexer --help")
+    print("   scout install-hook /path/to/repo\n")
+    print("For more help: scout --help")
     print()
 
     return 0
@@ -621,17 +621,17 @@ def cmd_check(args):
         all_ok = False
 
     try:
-        from mcpindexer.embeddings import EmbeddingStore
-        from mcpindexer.indexer import MultiRepoIndexer
+        from scout.embeddings import EmbeddingStore
+        from scout.indexer import MultiRepoIndexer
 
-        print("✓ mcpindexer modules available")
+        print("✓ scout modules available")
     except ImportError as e:
-        print(f"✗ mcpindexer not properly installed: {e}")
+        print(f"✗ scout not properly installed: {e}")
         print("  Try: pip install -e .")
         all_ok = False
 
     # Check database directory
-    db_path = os.getenv("MCP_INDEXER_DB_PATH", "~/.mcpindexer/db")
+    db_path = os.getenv("SCOUT_DB_PATH", "~/.scout/db")
     db_path_expanded = os.path.expanduser(db_path)
     if os.path.exists(db_path_expanded):
         print(f"✓ Database directory: {db_path_expanded}")
@@ -640,7 +640,7 @@ def cmd_check(args):
         print(f"  Location: {db_path_expanded}")
 
     # Check stack config
-    stack_path = os.path.expanduser("~/.mcpindexer/stack.json")
+    stack_path = os.path.expanduser("~/.scout/stack.json")
     if os.path.exists(stack_path):
         try:
             config = StackConfig()
@@ -650,14 +650,14 @@ def cmd_check(args):
             print(f"⚠ Stack config exists but could not be read: {e}")
     else:
         print("⚠ No repositories indexed yet")
-        print("  Run: mcpindexer add /path/to/repo")
+        print("  Run: scout add /path/to/repo")
 
     print()
     if all_ok:
         print("✓ Installation verified! Ready to use.")
         print("\nNext steps:")
-        print("  mcpindexer add /path/to/repo    # Index your first repository")
-        print("  mcpindexer status                 # Check indexing status")
+        print("  scout add /path/to/repo    # Index your first repository")
+        print("  scout status                 # Check indexing status")
         return 0
     else:
         print("✗ Installation incomplete. Please fix the errors above.")
@@ -669,7 +669,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="MCP Indexer CLI - Manage repository indexing"
     )
-    parser.add_argument("--version", action="version", version="mcpindexer 0.1.0")
+    parser.add_argument("--version", action="version", version="scout 0.1.0")
     parser.add_argument(
         "--verbose",
         "-v",

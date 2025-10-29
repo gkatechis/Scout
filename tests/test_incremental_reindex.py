@@ -12,8 +12,8 @@ from pathlib import Path
 
 import git
 
-from mcpindexer.embeddings import EmbeddingStore
-from mcpindexer.indexer import RepoIndexer
+from scout.embeddings import EmbeddingStore
+from scout.indexer import RepoIndexer
 
 
 def create_test_repo(repo_path: Path):

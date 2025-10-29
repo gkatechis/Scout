@@ -8,7 +8,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Set
 
-from mcpindexer.parser import ImportStatement, ParsedFile
+from scout.parser import ImportStatement, ParsedFile
 
 
 @dataclass
