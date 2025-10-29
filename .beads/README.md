@@ -4,7 +4,7 @@ This project uses [Beads](https://github.com/steveyegge/beads) for issue trackin
 
 ## How It Works
 
-- **Local Database**: `.beads/mcpIndexer.db` (gitignored) - contains ALL issues
+- **Local Database**: `.beads/Scout.db` (gitignored) - contains ALL issues
 - **Version Control**: `.beads/issues.jsonl` (tracked) - contains only PUBLIC issues
 - **Git Hooks**: Automatically filter issues labeled "zendesk" or "internal" before committing
 
